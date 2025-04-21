@@ -942,7 +942,7 @@ void Connection::onmessage()
         } 
         else if (nread == 0)  // 客户端连接已断开。
         {  
-            closecallback();                     // 回调TcpServer::closecallback()。
+            closecallback();                     // 回调Connection::closecallback()。
             break;
         }
     }
