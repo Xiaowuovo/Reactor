@@ -1,2 +1,24 @@
-README.md
+# 编译产物
+*.o
+*.so
+*.a
+server
+client
+test_mempool
+test_core
 tmp
+
+# 调试文件
+core
+core.*
+vgcore.*
+
+# 编辑器临时文件
+*~
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# 其他
+.DS_Store
