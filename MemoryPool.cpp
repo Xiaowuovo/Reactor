@@ -4,7 +4,6 @@
 
 MemoryPool::MemoryPool(size_t block_size, size_t initial_blocks)
     : block_size_(block_size), 
-      block_count_(0),
       free_list_(nullptr),
       total_allocated_(0), 
       current_used_(0), 
@@ -43,32 +42,23 @@ void MemoryPool::expand(size_t block_count) {
     current += block_size_;
   }
   
-  block_count_ += block_count;
   total_allocated_ += block_count;
 }
 
 void* MemoryPool::allocate() {
-  std::lock_guard<std::mutex> lock(mutex_);
-  
-  // 如果空闲链表为空，扩展内存池
+  // 无锁操作：因为是线程局部的
   if (free_list_ == nullptr) {
-    // 每次扩展时增加50个块
     expand(50);
   }
   
-  // 从空闲链表头部取出一个块
   MemoryBlock* block = free_list_;
   free_list_ = block->next;
   
-  // 更新统计信息
   ++current_used_;
   ++allocation_count_;
   if (current_used_ > max_used_) {
     max_used_ = current_used_;
   }
-  
-  // 将内存清零（可选，根据需求决定）
-  std::memset(block, 0, block_size_);
   
   return block;
 }
@@ -78,14 +68,11 @@ void MemoryPool::deallocate(void* ptr) {
     return;
   }
   
-  std::lock_guard<std::mutex> lock(mutex_);
-  
-  // 将块加入空闲链表头部
+  // 无锁操作：因为是线程局部的
   MemoryBlock* block = static_cast<MemoryBlock*>(ptr);
   block->next = free_list_;
   free_list_ = block;
   
-  // 更新统计信息
   --current_used_;
   ++deallocation_count_;
 }
