@@ -1,29 +1,23 @@
 #include "MemoryPool.h"
-#include <iostream>
 #include <cstring>
+#include <iostream>
 
 MemoryPool::MemoryPool(size_t block_size, size_t initial_blocks)
-    : block_size_(block_size),
+    : block_size_(block_size), 
       block_count_(0),
       free_list_(nullptr),
-      total_allocated_(0),
-      current_used_(0),
+      total_allocated_(0), 
+      current_used_(0), 
       max_used_(0),
-      allocation_count_(0),
+      allocation_count_(0), 
       deallocation_count_(0) {
-  // 确保块大小至少能容纳指针（用于构建空闲链表）
   if (block_size_ < sizeof(MemoryBlock)) {
     block_size_ = sizeof(MemoryBlock);
   }
-  
-  // 预分配初始内存块
-  if (initial_blocks > 0) {
-    expand(initial_blocks);
-  }
+  expand(initial_blocks);
 }
 
 MemoryPool::~MemoryPool() {
-  // 释放所有大块内存
   for (void* chunk : chunks_) {
     ::free(chunk);
   }
@@ -32,7 +26,6 @@ MemoryPool::~MemoryPool() {
 }
 
 void MemoryPool::expand(size_t block_count) {
-  // 分配一大块连续内存
   size_t chunk_size = block_size_ * block_count;
   void* chunk = ::malloc(chunk_size);
   
@@ -40,10 +33,8 @@ void MemoryPool::expand(size_t block_count) {
     throw std::bad_alloc();
   }
   
-  // 保存这块内存的指针，用于最后释放
   chunks_.push_back(chunk);
   
-  // 将这块内存切分成多个小块，并加入空闲链表
   char* current = static_cast<char*>(chunk);
   for (size_t i = 0; i < block_count; ++i) {
     MemoryBlock* block = reinterpret_cast<MemoryBlock*>(current);

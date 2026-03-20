@@ -3,15 +3,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <mutex>
 #include <vector>
 
-// 简易内存池实现
+// 线程局部内存池实现（无锁版本）
 // 设计思路：
-// 1. 预分配固定大小的内存块（例如1KB、4KB）
-// 2. 使用空闲链表管理可用内存块
-// 3. 申请时从池中获取，释放时放回池中
-// 4. 避免频繁调用 new/delete，减少内存碎片
+// 1. 每个线程拥有独立的内存池实例（thread_local）
+// 2. 无需加锁，完全无竞争
+// 3. 预分配固定大小的内存块
+// 4. 使用空闲链表管理可用内存块
+// 5. 适合 one loop per thread 模型
 class MemoryPool {
  private:
   struct MemoryBlock {
@@ -19,12 +19,10 @@ class MemoryPool {
   };
 
   size_t block_size_;           // 每个内存块的大小
-  size_t block_count_;          // 预分配的内存块数量
   MemoryBlock* free_list_;      // 空闲链表头指针
   std::vector<void*> chunks_;   // 存储所有大块内存的指针，用于最终释放
-  std::mutex mutex_;            // 保护内存池的互斥锁
   
-  // 统计信息
+  // 统计信息（无需原子操作，因为是线程局部的）
   size_t total_allocated_;      // 总共分配的块数
   size_t current_used_;         // 当前使用的块数
   size_t max_used_;             // 历史最大使用块数
@@ -33,16 +31,14 @@ class MemoryPool {
 
  public:
   // 构造函数：指定块大小和预分配块数量
-  // block_size: 每个内存块的大小（字节）
-  // initial_blocks: 初始预分配的块数量
-  MemoryPool(size_t block_size = 4096, size_t initial_blocks = 100);
+  MemoryPool(size_t block_size = 4096, size_t initial_blocks = 50);
   
   ~MemoryPool();
 
-  // 从内存池中分配一个内存块
+  // 从内存池中分配一个内存块（无锁）
   void* allocate();
 
-  // 将内存块归还到内存池
+  // 将内存块归还到内存池（无锁）
   void deallocate(void* ptr);
 
   // 获取统计信息

@@ -2,64 +2,81 @@
 #include <cstring>
 #include <iostream>
 
-// 初始化静态成员
-// 小块: 1KB，预分配200块
-MemoryPool BufferPool::small_pool_(1024, 200);
-// 中块: 4KB，预分配100块
-MemoryPool BufferPool::medium_pool_(4096, 100);
-// 大块: 16KB，预分配50块
-MemoryPool BufferPool::large_pool_(16384, 50);
-
-bool BufferPool::stats_enabled_ = false;
+// 初始化线程局部存储的静态成员
+thread_local MemoryPool* BufferPool::small_pool_ = nullptr;
+thread_local MemoryPool* BufferPool::medium_pool_ = nullptr;
+thread_local MemoryPool* BufferPool::large_pool_ = nullptr;
 
 void* BufferPool::allocate(size_t size) {
-  // 根据大小选择合适的内存池
   if (size <= 1024) {
-    return small_pool_.allocate();
+    // 懒初始化：第一次使用时才创建
+    if (!small_pool_) {
+      small_pool_ = new MemoryPool(1024, 100);  // 1KB块，预分配100个
+    }
+    return small_pool_->allocate();
   } else if (size <= 4096) {
-    return medium_pool_.allocate();
+    if (!medium_pool_) {
+      medium_pool_ = new MemoryPool(4096, 50);  // 4KB块，预分配50个
+    }
+    return medium_pool_->allocate();
   } else if (size <= 16384) {
-    return large_pool_.allocate();
+    if (!large_pool_) {
+      large_pool_ = new MemoryPool(16384, 25);  // 16KB块，预分配25个
+    }
+    return large_pool_->allocate();
   } else {
-    // 如果超过最大池大小，直接使用malloc
+    // 超大块直接用malloc
     return ::malloc(size);
   }
 }
 
 void BufferPool::deallocate(void* ptr, size_t size) {
-  if (ptr == nullptr) {
-    return;
-  }
+  if (ptr == nullptr) return;
   
-  // 根据大小归还到对应的内存池
   if (size <= 1024) {
-    small_pool_.deallocate(ptr);
+    if (small_pool_) {
+      small_pool_->deallocate(ptr);
+    }
   } else if (size <= 4096) {
-    medium_pool_.deallocate(ptr);
+    if (medium_pool_) {
+      medium_pool_->deallocate(ptr);
+    }
   } else if (size <= 16384) {
-    large_pool_.deallocate(ptr);
+    if (large_pool_) {
+      large_pool_->deallocate(ptr);
+    }
   } else {
-    // 如果是malloc分配的，直接free
     ::free(ptr);
   }
 }
 
-void BufferPool::print_all_stats() {
+void BufferPool::print_stats() {
   std::cout << "\n========================================" << std::endl;
-  std::cout << "       Buffer Pool Statistics" << std::endl;
-  std::cout << "========================================\n" << std::endl;
+  std::cout << "  Thread-Local Buffer Pool Statistics" << std::endl;
+  std::cout << "========================================" << std::endl;
   
-  std::cout << "--- Small Pool (1KB) ---" << std::endl;
-  small_pool_.print_stats();
-  std::cout << std::endl;
+  if (small_pool_) {
+    std::cout << "\n--- Small Pool (1KB) ---" << std::endl;
+    small_pool_->print_stats();
+  }
   
-  std::cout << "--- Medium Pool (4KB) ---" << std::endl;
-  medium_pool_.print_stats();
-  std::cout << std::endl;
+  if (medium_pool_) {
+    std::cout << "\n--- Medium Pool (4KB) ---" << std::endl;
+    medium_pool_->print_stats();
+  }
   
-  std::cout << "--- Large Pool (16KB) ---" << std::endl;
-  large_pool_.print_stats();
+  if (large_pool_) {
+    std::cout << "\n--- Large Pool (16KB) ---" << std::endl;
+    large_pool_->print_stats();
+  }
+  
   std::cout << std::endl;
+}
+
+void BufferPool::get_stats(size_t& small_allocs, size_t& medium_allocs, size_t& large_allocs) {
+  small_allocs = small_pool_ ? small_pool_->get_allocation_count() : 0;
+  medium_allocs = medium_pool_ ? medium_pool_->get_allocation_count() : 0;
+  large_allocs = large_pool_ ? large_pool_->get_allocation_count() : 0;
 }
 
 // PooledBuffer 实现
