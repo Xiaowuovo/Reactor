@@ -73,7 +73,7 @@ fi
 
 echo "" | tee -a $LOG_FILE
 echo "[生成的可执行文件]" | tee -a $LOG_FILE
-ls -lh test_core test_mempool client tmp 2>/dev/null | tee -a $LOG_FILE
+ls -lh test_core test_mempool client server 2>/dev/null | tee -a $LOG_FILE
 echo "" | tee -a $LOG_FILE
 
 # ============================================
@@ -154,7 +154,7 @@ echo "端口: 64000" | tee -a $LOG_FILE
 echo "" | tee -a $LOG_FILE
 
 # 启动服务器（后台运行）
-./tmp > server.log 2>&1 &
+./server > server.log 2>&1 &
 SERVER_PID=$!
 echo "服务器进程 PID: $SERVER_PID" | tee -a $LOG_FILE
 

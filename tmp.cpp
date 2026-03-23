@@ -29,7 +29,8 @@ int main(int argc,char *argv[])
     signal(SIGINT,Stop);        // 信号2，按Ctrl+C发送的信号。
     signal(SIGTRAP,handleTrap);        // 信号2，按Ctrl+C发送的信号。
 
-    echoserver=new EchoServer("10.0.4.8",64000,3,2);
+    // 绑定0.0.0.0监听所有网络接口，端口64000，3个I/O线程，2个工作线程
+    echoserver=new EchoServer("0.0.0.0",64000,3,2);
     echoserver->Start();
 
     return 0;
