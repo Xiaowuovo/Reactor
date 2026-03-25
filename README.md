@@ -10,24 +10,18 @@
 
 ## 🚀 快速开始
 
-### 第一次使用
-
 ```bash
-# 1. 重组项目结构（仅需一次）
-chmod +x reorganize.sh
-./reorganize.sh
+# 编译所有程序
+make
 
-# 2. 更新构建系统
-mv Makefile.final Makefile
+# 运行交互式演示系统
+make run-demo
 
-# 3. 编译并运行演示
-make && make demo
-```
+# 运行所有测试
+make test
 
-### 查看完整指南
-
-```bash
-cat QUICK_START.md
+# 生成性能图表
+make visualize
 ```
 
 ---
@@ -138,29 +132,13 @@ make answer
 
 ---
 
-## 📚 文档导航
+## 📚 文档
 
-### 新手入门
-
-| 文档 | 内容 | 推荐度 |
-|------|------|--------|
-| **QUICK_START.md** | 5分钟快速上手 | ⭐⭐⭐⭐⭐ |
-| **README.md** | 项目概览（本文档） | ⭐⭐⭐⭐⭐ |
-
-### 技术文档
-
-| 文档 | 内容 | 用途 |
-|------|------|------|
-| **docs/ARCHITECTURE.md** | 系统架构设计 | 了解架构 |
-| **docs/DESIGN.md** | 详细设计文档 | 实现细节 |
-| **docs/TESTING.md** | 测试文档 | 测试策略 |
-
-### 答辩准备
-
-| 文档 | 内容 | 重要性 |
-|------|------|--------|
-| **docs/DEMO_GUIDE.md** | 答辩演示指南 | ⭐⭐⭐⭐⭐ |
-| **docs/FINAL_SUMMARY.md** | 最终优化总结 | ⭐⭐⭐⭐⭐ |
+- **README.md** - 项目说明（本文档）
+- **docs/ARCHITECTURE.md** - 系统架构
+- **docs/DESIGN.md** - 详细设计
+- **docs/TESTING.md** - 测试文档
+- **docs/DEMO_GUIDE.md** - 答辩演示指南
 
 ---
 
@@ -257,69 +235,13 @@ pip3 install matplotlib pandas numpy
 
 ---
 
-## 🔍 常见问题
+## � 需要帮助？
 
-### Q: 如何重组项目结构？
-
-```bash
-./reorganize.sh
-mv Makefile.final Makefile
-```
-
-### Q: 编译失败？
-
-```bash
-# 检查g++版本（需支持C++11）
-g++ --version
-
-# 清理重新编译
-make clean && make
-```
-
-### Q: Python依赖缺失？
-
-```bash
-pip3 install matplotlib pandas numpy
-```
-
-### Q: 更多问题？
-
-查看 `QUICK_START.md` 的常见问题章节
+- 运行 `make help` 查看所有命令
+- 查看 `docs/DEMO_GUIDE.md` 了解答辩演示流程
+- 查看 `docs/ARCHITECTURE.md` 了解系统架构
 
 ---
 
-## 📞 获取帮助
-
-- **快速问题：** 查看 QUICK_START.md
-- **答辩准备：** 查看 docs/DEMO_GUIDE.md
-- **技术细节：** 查看 docs/ARCHITECTURE.md
-- **命令帮助：** 运行 `make help`
-
----
-
-## 🏆 项目评价
-
-- **技术水平：** ⭐⭐⭐⭐⭐ 优秀
-- **工程质量：** ⭐⭐⭐⭐⭐ 优秀
-- **演示效果：** ⭐⭐⭐⭐⭐ 优秀
-- **预期成绩：** 优秀
-
----
-
-## 📄 许可证
-
-MIT License
-
----
-
-## 👨‍💻 作者
-
-毕业设计项目 - 2026
-
----
-
-**最后更新：** 2026-03-24  
-**版本：** v2.0  
-**状态：** ✅ 就绪，可立即答辩
-
-**祝答辩成功！🎓✨**
+**最后更新：** 2026-03-25  
+**状态：** ✅ 就绪

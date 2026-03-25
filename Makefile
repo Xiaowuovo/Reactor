@@ -50,7 +50,7 @@ all: banner directories $(TARGETS)
 	@echo "  ./test_network  - 网络测试"
 	@echo ""
 	@echo "$(CYAN)快速命令：$(NC)"
-	@echo "  make demo       - 运行演示系统"
+	@echo "  make run-demo   - 运行演示系统"
 	@echo "  make test       - 运行所有测试"
 	@echo "  make visualize  - 生成图表"
 	@echo ""
@@ -103,7 +103,7 @@ $(TEST_NETWORK): $(TEST_DIR)/test_network.o $(CORE_OBJS)
 
 # ===== 快捷命令 =====
 
-demo: $(DEMO)
+run-demo: $(DEMO)
 	@echo "$(GREEN)启动演示系统...$(NC)"
 	@./$(DEMO)
 
@@ -150,7 +150,7 @@ help:
 	@echo ""
 	@echo "$(GREEN)编译：$(NC)"
 	@echo "  make           - 编译所有程序"
-	@echo "  make demo      - 编译并运行演示系统"
+	@echo "  make run-demo  - 编译并运行演示系统"
 	@echo "  make server    - 仅编译服务器"
 	@echo "  make client    - 仅编译客户端"
 	@echo ""
@@ -166,7 +166,7 @@ help:
 	@echo "  make distclean - 深度清理"
 	@echo ""
 
-.PHONY: all banner directories demo test visualize answer clean distclean help
+.PHONY: all banner directories run-demo test visualize answer clean distclean help
 
 # 依赖关系
 $(SRC_DIR)/demo.o: $(SRC_DIR)/demo.cpp $(SRC_DIR)/TerminalUI.h $(SRC_DIR)/MemoryPool.h $(SRC_DIR)/BufferPool.h
