@@ -510,7 +510,8 @@ int main() {
         print_banner();
         
         show_main_menu();
-        string choice = cin.get() - '0';
+	int val = cin.get() - '0';
+        string choice = to_string(val);
         cin.ignore(1000, '\n');
         
         clear_screen();

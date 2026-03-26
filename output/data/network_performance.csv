@@ -1,0 +1,4 @@
+metric,value
+QPS,52376
+Latency_ms,0.0135
+Connections,50

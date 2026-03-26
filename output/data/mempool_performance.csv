@@ -1,0 +1,3 @@
+method,time_ms,qps,speedup
+malloc,100,500000,1.0
+pool,27,1851851,1.01163
