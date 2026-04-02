@@ -671,3 +671,489 @@ body {
 .section {
     animation: fadeIn 0.6s ease-out;
 }
+
+/* ===== 专业测试系统样式 ===== */
+
+/* 测试模块容器 */
+.test-module {
+    background: var(--dark-light);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    transition: var(--transition);
+}
+
+.test-module:hover {
+    border-color: var(--primary);
+    box-shadow: 0 8px 24px var(--shadow);
+}
+
+/* 测试头部 */
+.test-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border);
+}
+
+.test-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.test-title h3 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.test-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* 测试配置面板 */
+.test-config {
+    background: var(--dark);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+    opacity: 0;
+}
+
+.test-config.show {
+    max-height: 2000px;
+    opacity: 1;
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.config-section {
+    background: var(--dark-light);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.config-section h4 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.config-group {
+    margin-bottom: 1rem;
+}
+
+.config-group:last-child {
+    margin-bottom: 0;
+}
+
+.config-group label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.config-input, .config-slider {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.config-input:focus, .config-slider:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.config-slider {
+    padding: 0;
+    height: 6px;
+    appearance: none;
+    background: var(--border);
+    cursor: pointer;
+}
+
+.config-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.config-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+.slider-value {
+    display: inline-block;
+    margin-left: 0.5rem;
+    font-weight: bold;
+    color: var(--primary);
+    min-width: 30px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* 测试控制按钮 */
+.test-controls {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+}
+
+/* 测试进度 */
+.test-progress {
+    background: var(--dark);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border: 2px solid var(--primary);
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.progress-status {
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.progress-time {
+    color: var(--text-muted);
+}
+
+.progress-bar-container {
+    position: relative;
+    height: 40px;
+    background: var(--dark-lighter);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--gradient);
+    border-radius: 20px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-percent {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.progress-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.stat-mini {
+    background: var(--dark-lighter);
+    padding: 0.75rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-mini-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.stat-mini-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+/* 专业测试结果 */
+.test-result-professional {
+    background: var(--dark);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border-left: 4px solid var(--success);
+}
+
+.test-result-professional.error {
+    border-left-color: var(--danger);
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.result-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.result-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.result-tab {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.result-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.result-content {
+    display: none;
+}
+
+.result-content.active {
+    display: block;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.result-metric {
+    background: var(--dark-lighter);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.result-metric-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.result-metric-value {
+    font-size: 1.75rem;
+    font-weight: bold;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.result-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.result-table th, .result-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.result-table th {
+    background: var(--dark-lighter);
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.result-table tr:hover {
+    background: var(--dark-lighter);
+}
+
+/* 测试历史面板 */
+.test-history-panel {
+    position: fixed;
+    top: 80px;
+    right: 0;
+    width: 400px;
+    max-width: 90vw;
+    height: calc(100vh - 80px);
+    background: var(--dark-light);
+    border-left: 1px solid var(--border);
+    box-shadow: -4px 0 20px var(--shadow);
+    z-index: 100;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+}
+
+.test-history-panel.show {
+    transform: translateX(0);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--dark-light);
+    z-index: 10;
+}
+
+.panel-header h3 {
+    margin: 0;
+}
+
+.history-filters {
+    padding: 1rem 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.history-list {
+    padding: 1rem 1.5rem;
+}
+
+.history-empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem;
+}
+
+.history-item {
+    background: var(--dark);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--primary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.history-item:hover {
+    transform: translateX(-4px);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.history-item-title {
+    font-weight: bold;
+}
+
+.history-item-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.history-item-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.history-item-stat {
+    color: var(--text-muted);
+}
+
+.history-item-stat strong {
+    color: var(--text);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .config-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .test-controls {
+        flex-direction: column;
+    }
+    
+    .test-controls .btn {
+        width: 100%;
+    }
+    
+    .progress-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .test-history-panel {
+        width: 100vw;
+        max-width: 100vw;
+    }
+}
