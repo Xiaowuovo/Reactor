@@ -21,6 +21,53 @@
     --border: #334155;
     --shadow: rgba(0, 0, 0, 0.3);
     --gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 亮色主题 */
+body.light-theme {
+    --dark: #ffffff;
+    --dark-light: #f8fafc;
+    --dark-lighter: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #cbd5e1;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* 加载遮罩 */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s, visibility 0.5s;
+}
+
+.loading-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.spinner-large {
+    width: 60px;
+    height: 60px;
+    border: 5px solid rgba(102, 126, 234, 0.2);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-overlay p {
+    margin-top: 1rem;
+    color: var(--text-muted);
 }
 
 body {
@@ -95,6 +142,32 @@ body {
 .nav-link:hover, .nav-link.active {
     color: var(--text);
     background: var(--dark-lighter);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: var(--dark-lighter);
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: var(--transition);
+}
+
+.btn-icon:hover {
+    background: var(--primary);
+    transform: scale(1.05);
 }
 
 .nav-status {
