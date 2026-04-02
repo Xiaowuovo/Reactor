@@ -1,6 +1,6 @@
-# Reactor 网络库
+# Reactor 网络库性能监控系统
 
-> 基于线程局部内存池的高性能Reactor网络库 - 毕业设计项目
+> 基于线程局部内存池的高性能网络库 + Web实时监控平台 - 完整系统毕业设计
 
 [![C++11](https://img.shields.io/badge/C++-11-blue.svg)](https://en.cppreference.com/w/cpp/11)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -10,17 +10,35 @@
 
 ## 🚀 快速开始
 
+### Web监控系统（推荐用于答辩）
+
 ```bash
-# 编译所有程序
+# 编译
 make
 
-# 运行交互式演示系统
+# 启动Web监控系统
+make run-web
+
+# 浏览器访问
+http://localhost:8080
+```
+
+**完整的Web系统包含：**
+- 🌐 实时性能监控界面
+- 📊 在线测试控制面板
+- 📈 动态数据可视化
+- ⚡ 基于Reactor的HTTP服务器
+
+### 命令行演示
+
+```bash
+# 交互式演示
 make run-demo
 
-# 运行所有测试
+# 运行测试
 make test
 
-# 生成性能图表
+# 生成图表
 make visualize
 ```
 
@@ -60,17 +78,16 @@ make visualize
 
 ```
 Reactor/
-├── src/              # 📦 源代码（7个文件）
-├── tests/            # 🧪 测试代码（3个文件）
-├── tools/            # 🛠️ 工具脚本（4个文件）
-├── docs/             # 📚 文档（7个文件）
+├── src/              # 📦 源代码（HttpServer.h, webserver.cpp等）
+├── web/              # 🌐 前端界面（HTML, CSS, JS）
+├── tests/            # 🧪 测试代码
+├── tools/            # 🛠️ 工具脚本
+├── docs/             # 📚 文档
 ├── output/           # 📊 输出文件（自动生成）
+├── deploy.sh         # ☁️ 云端部署脚本
 ├── Makefile          # 🔧 构建系统
-├── QUICK_START.md    # 📖 快速指南
 └── README.md         # 📄 本文档
 ```
-
-**详细结构说明：** 查看 QUICK_START.md
 
 ---
 
@@ -135,10 +152,40 @@ make answer
 ## 📚 文档
 
 - **README.md** - 项目说明（本文档）
+- **docs/WEB_SYSTEM.md** - Web系统架构
+- **docs/CLOUD_DEPLOYMENT.md** - 云端部署指南
 - **docs/ARCHITECTURE.md** - 系统架构
 - **docs/DESIGN.md** - 详细设计
 - **docs/TESTING.md** - 测试文档
 - **docs/DEMO_GUIDE.md** - 答辩演示指南
+
+---
+
+## ☁️ 云端部署
+
+### 一键部署到云服务器
+
+```bash
+# 在服务器上执行
+cd ~/Reactor
+chmod +x deploy.sh
+./deploy.sh
+```
+
+### 配置阿里云安全组
+
+1. 登录阿里云ECS控制台
+2. 安全组 → 配置规则 → 添加入方向规则
+3. 端口: **8080/8080**, 协议: **TCP**, 授权: **0.0.0.0/0**
+
+### 访问系统
+
+```
+内网: http://172.27.195.213:8080
+外网: http://您的公网IP:8080
+```
+
+**详细部署文档**: `docs/CLOUD_DEPLOYMENT.md`
 
 ---
 

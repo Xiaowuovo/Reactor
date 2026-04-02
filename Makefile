@@ -27,11 +27,12 @@ CORE_OBJS = $(CORE_SRCS:.cpp=.o)
 DEMO = demo
 SERVER = server
 CLIENT = client
+WEBSERVER = webserver
 TEST_MEMPOOL = test_mempool
 TEST_CORE = test_core
 TEST_NETWORK = test_network
 
-TARGETS = $(DEMO) $(SERVER) $(CLIENT) $(TEST_MEMPOOL) $(TEST_CORE) $(TEST_NETWORK)
+TARGETS = $(DEMO) $(SERVER) $(CLIENT) $(WEBSERVER) $(TEST_MEMPOOL) $(TEST_CORE) $(TEST_NETWORK)
 
 # ===== 主目标 =====
 
@@ -43,6 +44,7 @@ all: banner directories $(TARGETS)
 	@echo ""
 	@echo "$(CYAN)可执行文件：$(NC)"
 	@echo "  ./demo          - 交互式演示系统 $(YELLOW)(推荐)$(NC)"
+	@echo "  ./webserver     - Web监控系统 $(YELLOW)(毕设展示)$(NC)"
 	@echo "  ./server        - 服务器程序"
 	@echo "  ./client        - 客户端程序"
 	@echo "  ./test_mempool  - 内存池测试"
@@ -50,6 +52,7 @@ all: banner directories $(TARGETS)
 	@echo "  ./test_network  - 网络测试"
 	@echo ""
 	@echo "$(CYAN)快速命令：$(NC)"
+	@echo "  make run-web    - 启动Web监控系统 $(YELLOW)(毕设演示)$(NC)"
 	@echo "  make run-demo   - 运行演示系统"
 	@echo "  make test       - 运行所有测试"
 	@echo "  make visualize  - 生成图表"
@@ -82,6 +85,11 @@ $(CLIENT): $(SRC_DIR)/client.o $(CORE_OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 	@echo "$(GREEN)✓ client 完成$(NC)"
 
+$(WEBSERVER): $(SRC_DIR)/webserver.o $(CORE_OBJS)
+	@echo "$(YELLOW)链接 webserver...$(NC)"
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+	@echo "$(GREEN)✓ webserver 完成$(NC)"
+
 $(TEST_MEMPOOL): $(TEST_DIR)/test_mempool.o $(CORE_OBJS)
 	@echo "$(YELLOW)链接 test_mempool...$(NC)"
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
@@ -102,6 +110,11 @@ $(TEST_NETWORK): $(TEST_DIR)/test_network.o $(CORE_OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # ===== 快捷命令 =====
+
+run-web: $(WEBSERVER)
+	@echo "$(GREEN)启动Web监控系统...$(NC)"
+	@echo "$(CYAN)访问: http://localhost:8080$(NC)"
+	@./$(WEBSERVER)
 
 run-demo: $(DEMO)
 	@echo "$(GREEN)启动演示系统...$(NC)"
@@ -150,6 +163,7 @@ help:
 	@echo ""
 	@echo "$(GREEN)编译：$(NC)"
 	@echo "  make           - 编译所有程序"
+	@echo "  make run-web   - 编译并启动Web监控系统 $(YELLOW)(毕设)$(NC)"
 	@echo "  make run-demo  - 编译并运行演示系统"
 	@echo "  make server    - 仅编译服务器"
 	@echo "  make client    - 仅编译客户端"
@@ -166,12 +180,13 @@ help:
 	@echo "  make distclean - 深度清理"
 	@echo ""
 
-.PHONY: all banner directories run-demo test visualize answer clean distclean help
+.PHONY: all banner directories run-web run-demo test visualize answer clean distclean help
 
 # 依赖关系
 $(SRC_DIR)/demo.o: $(SRC_DIR)/demo.cpp $(SRC_DIR)/TerminalUI.h $(SRC_DIR)/MemoryPool.h $(SRC_DIR)/BufferPool.h
 $(SRC_DIR)/server.o: $(SRC_DIR)/server.cpp $(SRC_DIR)/net.h
 $(SRC_DIR)/client.o: $(SRC_DIR)/client.cpp $(SRC_DIR)/net.h
+$(SRC_DIR)/webserver.o: $(SRC_DIR)/webserver.cpp $(SRC_DIR)/HttpServer.h $(SRC_DIR)/net.h
 $(TEST_DIR)/test_mempool.o: $(TEST_DIR)/test_mempool.cpp $(SRC_DIR)/MemoryPool.h $(SRC_DIR)/BufferPool.h
 $(TEST_DIR)/test_core.o: $(TEST_DIR)/test_core.cpp $(SRC_DIR)/net.h
 $(TEST_DIR)/test_network.o: $(TEST_DIR)/test_network.cpp $(SRC_DIR)/TerminalUI.h
