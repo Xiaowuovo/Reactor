@@ -259,15 +259,19 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- 配置确认 -->
-                <div class="config-confirm">
-                    <button class="btn btn-secondary" onclick="confirmConfig('mempool')" id="mempool-confirm-btn">
-                        <span class="btn-icon">✓</span>
-                        确认配置
-                    </button>
-                    <span class="config-status" id="mempool-config-status">未确认</span>
+                    
+                    <!-- 配置确认（在配置面板内） -->
+                    <div class="config-actions">
+                        <button class="btn btn-success" onclick="confirmConfig('mempool')" id="mempool-confirm-btn">
+                            <span class="btn-icon">✓</span>
+                            确认并锁定配置
+                        </button>
+                        <button class="btn btn-warning" onclick="unlockConfig('mempool')" id="mempool-unlock-btn" style="display:none;">
+                            <span class="btn-icon">🔓</span>
+                            解锁配置
+                        </button>
+                        <span class="config-status" id="mempool-config-status"></span>
+                    </div>
                 </div>
 
                 <!-- 测试控制 -->
@@ -431,15 +435,19 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- 配置确认 -->
-                <div class="config-confirm">
-                    <button class="btn btn-secondary" onclick="confirmConfig('network')" id="network-confirm-btn">
-                        <span class="btn-icon">✓</span>
-                        确认配置
-                    </button>
-                    <span class="config-status" id="network-config-status">未确认</span>
+                    
+                    <!-- 配置确认（在配置面板内） -->
+                    <div class="config-actions">
+                        <button class="btn btn-success" onclick="confirmConfig('network')" id="network-confirm-btn">
+                            <span class="btn-icon">✓</span>
+                            确认并锁定配置
+                        </button>
+                        <button class="btn btn-warning" onclick="unlockConfig('network')" id="network-unlock-btn" style="display:none;">
+                            <span class="btn-icon">🔓</span>
+                            解锁配置
+                        </button>
+                        <span class="config-status" id="network-config-status"></span>
+                    </div>
                 </div>
 
                 <!-- 测试控制 -->

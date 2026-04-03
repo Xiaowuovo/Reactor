@@ -236,30 +236,74 @@ async function fetchHardwareInfo() {
     }
 }
 
-// ========== 配置确认 ==========
+// ========== 配置确认与解锁 ==========
 function confirmConfig(type) {
     const config = getTestConfig(type);
     state.confirmedConfig[type] = config;
     
     // 更新UI状态
+    const configPanel = document.getElementById(`${type}-config`);
     const statusEl = document.getElementById(`${type}-config-status`);
-    const btnEl = document.getElementById(`${type}-confirm-btn`);
+    const confirmBtn = document.getElementById(`${type}-confirm-btn`);
+    const unlockBtn = document.getElementById(`${type}-unlock-btn`);
     
+    // 锁定配置面板
+    if (configPanel) {
+        configPanel.classList.add('locked');
+    }
+    
+    // 更新状态显示
     if (statusEl) {
-        statusEl.textContent = '已确认 ✓';
+        statusEl.textContent = '✓ 配置已锁定';
         statusEl.classList.add('confirmed');
     }
     
-    if (btnEl) {
-        btnEl.innerHTML = '<span class="btn-icon">✓</span> 配置已锁定';
+    // 切换按钮显示
+    if (confirmBtn) {
+        confirmBtn.style.display = 'none';
+    }
+    if (unlockBtn) {
+        unlockBtn.style.display = 'inline-flex';
     }
     
     const testName = type === 'mempool' ? '内存池' : '网络';
-    addLog(`✓ ${testName}测试配置已确认`, 'success');
-    showNotification(`${testName}测试配置已确认并锁定`, 'success');
+    addLog(`🔒 ${testName}测试配置已锁定`, 'success');
+    showNotification(`${testName}测试配置已锁定，每次测试将使用此配置`, 'success');
     
-    // 显示确认的配置摘要
-    console.log(`[${type}] 已确认配置:`, config);
+    console.log(`[${type}] 已锁定配置:`, config);
+}
+
+function unlockConfig(type) {
+    state.confirmedConfig[type] = null;
+    
+    // 更新UI状态
+    const configPanel = document.getElementById(`${type}-config`);
+    const statusEl = document.getElementById(`${type}-config-status`);
+    const confirmBtn = document.getElementById(`${type}-confirm-btn`);
+    const unlockBtn = document.getElementById(`${type}-unlock-btn`);
+    
+    // 解锁配置面板
+    if (configPanel) {
+        configPanel.classList.remove('locked');
+    }
+    
+    // 更新状态显示
+    if (statusEl) {
+        statusEl.textContent = '';
+        statusEl.classList.remove('confirmed');
+    }
+    
+    // 切换按钮显示
+    if (confirmBtn) {
+        confirmBtn.style.display = 'inline-flex';
+    }
+    if (unlockBtn) {
+        unlockBtn.style.display = 'none';
+    }
+    
+    const testName = type === 'mempool' ? '内存池' : '网络';
+    addLog(`🔓 ${testName}测试配置已解锁`, 'info');
+    showNotification(`${testName}测试配置已解锁，可以修改参数`, 'info');
 }
 
 // ========== 测试功能 ==========

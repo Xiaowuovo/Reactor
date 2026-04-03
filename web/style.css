@@ -1512,42 +1512,64 @@ nav .container {
     font-size: 0.9rem;
 }
 
-/* 配置确认 */
-.config-confirm {
+/* 配置操作区域（在配置面板内） */
+.config-actions {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 1rem;
-    margin: 1rem 0;
+    padding: 1.25rem;
+    margin-top: 1rem;
     background: var(--dark);
     border-radius: 8px;
     border: 1px solid var(--border);
+    border-top: 2px solid var(--primary);
 }
 
 .config-status {
     font-size: 0.875rem;
     color: var(--text-muted);
-    padding: 0.25rem 0.75rem;
+    padding: 0.35rem 0.75rem;
     border-radius: 4px;
     background: var(--dark-lighter);
+    margin-left: auto;
 }
 
 .config-status.confirmed {
     color: var(--success);
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(16, 185, 129, 0.15);
     border: 1px solid var(--success);
+    font-weight: 500;
 }
 
-.btn-secondary {
-    background: var(--dark-lighter);
-    color: var(--text);
-    border: 1px solid var(--border);
+.btn-warning {
+    background: var(--warning);
+    color: #1a1a2e;
+    border: none;
 }
 
-.btn-secondary:hover {
-    background: var(--primary);
+.btn-warning:hover {
+    background: #d97706;
     color: white;
-    border-color: var(--primary);
+}
+
+/* 配置锁定状态 */
+.test-config.locked .config-input,
+.test-config.locked .checkbox-label input {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.test-config.locked .config-section {
+    position: relative;
+}
+
+.test-config.locked .config-section::after {
+    content: '🔒';
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.875rem;
+    opacity: 0.5;
 }
 
 /* 响应式 */
