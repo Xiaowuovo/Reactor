@@ -1111,64 +1111,6 @@ function stopTest(type) {
     showNotification('测试已停止', 'warning');
 }
 
-// 导出测试结果（修复：导出真实结果而非配置）
-function exportTestResults(type) {
-    const result = testState[type].result;
-    const config = testState[type].config;
-    
-    if (!result || !config) {
-        showNotification('没有可导出的测试结果', 'warning');
-        return;
-    }
-
-    // CSV格式导出（适合Excel分析）
-    if (type === 'mempool' && result.malloc_ms !== undefined) {
-        let csv = 'Metric,Value\n';
-        csv += `Test Type,Memory Pool Performance\n`;
-        csv += `Timestamp,${new Date().toISOString()}\n`;
-        csv += `Iterations,${result.iterations}\n`;
-        csv += `Block Size (bytes),${result.block_size}\n`;
-        csv += `Threads,${result.threads}\n`;
-        csv += `malloc Time (ms),${result.malloc_ms}\n`;
-        csv += `Pool Time (ms),${result.pool_ms}\n`;
-        csv += `Speedup,${result.speedup}\n`;
-        csv += `malloc QPS,${result.malloc_qps}\n`;
-        csv += `Pool QPS,${result.pool_qps}\n`;
-        csv += `Improvement (%),${((result.malloc_ms - result.pool_ms) / result.malloc_ms * 100).toFixed(2)}\n`;
-        
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `mempool-results-${Date.now()}.csv`;
-        link.click();
-        URL.revokeObjectURL(url);
-        
-        addLog(`💾 测试结果已导出为CSV: ${link.download}`, 'success');
-        showNotification('测试结果已导出为CSV', 'success');
-    } else {
-        // JSON格式导出
-        const exportData = {
-            type: type,
-            timestamp: new Date().toISOString(),
-            config: config,
-            result: result
-        };
-        
-        const dataStr = JSON.stringify(exportData, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${type}-results-${Date.now()}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
-        
-        addLog(`💾 测试结果已导出: ${link.download}`, 'success');
-        showNotification('测试结果已导出', 'success');
-    }
-}
-
 // 保存到历史记录（使用真实数据）
 function saveToHistory(type, config, result) {
     const historyItem = {
@@ -1204,38 +1146,68 @@ function toggleTestHistory() {
 // 加载测试历史（显示真实数据）
 function loadTestHistory() {
     const historyList = document.getElementById('history-list');
+    const historyCount = document.getElementById('history-count');
+    const filterType = document.getElementById('history-filter-type').value;
+    const sortOrder = document.getElementById('history-sort')?.value || 'newest';
     
-    if (testState.history.length === 0) {
-        historyList.innerHTML = '<div class="history-empty">暂无测试记录</div>';
+    // 过滤
+    let filteredHistory = testState.history;
+    if (filterType !== 'all') {
+        filteredHistory = testState.history.filter(item => item.type === filterType);
+    }
+    
+    // 排序
+    if (sortOrder === 'oldest') {
+        filteredHistory = [...filteredHistory].reverse();
+    }
+    
+    // 更新计数
+    if (historyCount) {
+        historyCount.textContent = `${filteredHistory.length} 条记录`;
+    }
+    
+    if (filteredHistory.length === 0) {
+        historyList.innerHTML = `
+            <div class="history-empty">
+                <span class="empty-icon">📋</span>
+                <p>暂无测试记录</p>
+                <small>运行测试后，结果将自动保存到这里</small>
+            </div>
+        `;
         return;
     }
 
     let html = '';
-    testState.history.forEach(item => {
+    filteredHistory.forEach(item => {
         const date = new Date(item.timestamp);
-        const timeStr = date.toLocaleString('zh-CN');
-        const testName = item.type === 'mempool' ? '内存池测试' : '网络测试';
+        const timeStr = formatTimeAgo(date);
+        const fullTimeStr = date.toLocaleString('zh-CN');
+        const testName = item.type === 'mempool' ? '💾 内存池测试' : '🌐 网络测试';
+        const itemClass = item.type;
         
         // 提取真实结果数据
         let statsHtml = '';
-        if (item.type === 'mempool' && item.result.speedup) {
+        if (item.type === 'mempool' && item.result && item.result.speedup) {
             statsHtml = `
                 <div class="history-item-stat">加速: <strong>${item.result.speedup.toFixed(2)}x</strong></div>
                 <div class="history-item-stat">Pool QPS: <strong>${formatNumber(item.result.pool_qps)}</strong></div>
+                <div class="history-item-stat">迭代: <strong>${formatNumber(item.result.iterations)}</strong></div>
                 <div class="history-item-stat">线程: <strong>${item.result.threads}</strong></div>
             `;
-        } else if (item.type === 'network' && item.result.qps) {
+        } else if (item.type === 'network' && item.result && item.result.qps) {
             statsHtml = `
                 <div class="history-item-stat">QPS: <strong>${formatNumber(item.result.qps)}</strong></div>
                 <div class="history-item-stat">延迟: <strong>${item.result.avg_latency}μs</strong></div>
                 <div class="history-item-stat">成功率: <strong>${item.result.success_rate}%</strong></div>
+                <div class="history-item-stat">时长: <strong>${item.result.duration || item.config?.duration || '-'}s</strong></div>
             `;
         } else {
             statsHtml = `<div class="history-item-stat">测试完成</div>`;
         }
         
         html += `
-            <div class="history-item" onclick="viewHistoryItem(${item.id})">
+            <div class="history-item ${itemClass}" onclick="viewHistoryItem(${item.id})" title="${fullTimeStr}">
+                <button class="history-item-delete" onclick="deleteHistoryItem(event, ${item.id})" title="删除">✕</button>
                 <div class="history-item-header">
                     <span class="history-item-title">${testName}</span>
                     <span class="history-item-time">${timeStr}</span>
@@ -1250,39 +1222,70 @@ function loadTestHistory() {
     historyList.innerHTML = html;
 }
 
+// 格式化时间为相对时间
+function formatTimeAgo(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+    
+    if (diffSec < 60) return '刚刚';
+    if (diffMin < 60) return `${diffMin}分钟前`;
+    if (diffHour < 24) return `${diffHour}小时前`;
+    if (diffDay < 7) return `${diffDay}天前`;
+    return date.toLocaleDateString('zh-CN');
+}
+
 // 查看历史记录项
 function viewHistoryItem(id) {
     const item = testState.history.find(h => h.id === id);
     if (!item) return;
 
     testState[item.type].result = item.result;
+    testState[item.type].config = item.config;
     displayTestResult(item.type, item.result, item.config);
     toggleTestHistory();
     
     // 滚动到结果
     document.getElementById(`${item.type}-result`).scrollIntoView({ behavior: 'smooth' });
+    
+    addLog(`📋 查看历史记录: ${item.type === 'mempool' ? '内存池' : '网络'}测试`, 'info');
+}
+
+// 删除单条历史记录
+function deleteHistoryItem(event, id) {
+    event.stopPropagation(); // 阻止触发viewHistoryItem
+    
+    const index = testState.history.findIndex(h => h.id === id);
+    if (index === -1) return;
+    
+    testState.history.splice(index, 1);
+    localStorage.setItem('testHistory', JSON.stringify(testState.history));
+    loadTestHistory();
+    
+    showNotification('已删除该记录', 'info');
+}
+
+// 排序历史记录
+function sortHistory() {
+    loadTestHistory();
 }
 
 // 过滤历史记录
 function filterHistory() {
-    const filterType = document.getElementById('history-filter-type').value;
     loadTestHistory();
-    
-    if (filterType !== 'all') {
-        const items = document.querySelectorAll('.history-item');
-        items.forEach(item => {
-            const title = item.querySelector('.history-item-title').textContent;
-            if ((filterType === 'mempool' && !title.includes('内存池')) ||
-                (filterType === 'network' && !title.includes('网络'))) {
-                item.style.display = 'none';
-            }
-        });
-    }
 }
 
 // 清空历史记录
 function clearHistory() {
-    if (confirm('确定要清空所有测试历史记录吗？')) {
+    if (testState.history.length === 0) {
+        showNotification('没有可清空的记录', 'warning');
+        return;
+    }
+    
+    if (confirm('确定要清空所有测试历史记录吗？此操作不可恢复。')) {
         testState.history = [];
         localStorage.setItem('testHistory', '[]');
         loadTestHistory();
@@ -1290,5 +1293,3 @@ function clearHistory() {
         showNotification('历史记录已清空', 'success');
     }
 }
-
-// 已删除结果对比功能

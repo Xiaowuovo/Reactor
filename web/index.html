@@ -284,10 +284,6 @@
                         <span class="btn-icon">⏹</span>
                         停止测试
                     </button>
-                    <button class="btn btn-outline" onclick="exportTestResults('mempool')">
-                        <span class="btn-icon">💾</span>
-                        导出结果
-                    </button>
                 </div>
 
                 <!-- 实时进度 -->
@@ -460,10 +456,6 @@
                         <span class="btn-icon">⏹</span>
                         停止测试
                     </button>
-                    <button class="btn btn-outline" onclick="exportTestResults('network')">
-                        <span class="btn-icon">💾</span>
-                        导出结果
-                    </button>
                 </div>
 
                 <!-- 实时进度 -->
@@ -497,21 +489,34 @@
             </div>
 
             <!-- 测试历史面板 -->
-            <div id="test-history-panel" class="test-history-panel" style="display:none;">
+            <div id="test-history-panel" class="test-history-panel">
                 <div class="panel-header">
                     <h3>📜 测试历史记录</h3>
-                    <button class="btn-icon" onclick="toggleTestHistory()">✕</button>
+                    <div class="panel-actions">
+                        <span class="history-count" id="history-count">0 条记录</span>
+                        <button class="btn-icon" onclick="toggleTestHistory()" title="关闭">✕</button>
+                    </div>
                 </div>
-                <div class="history-filters">
+                <div class="history-toolbar">
                     <select id="history-filter-type" class="config-input" onchange="filterHistory()">
                         <option value="all">全部测试</option>
-                        <option value="mempool">内存池测试</option>
-                        <option value="network">网络测试</option>
+                        <option value="mempool">💾 内存池测试</option>
+                        <option value="network">🌐 网络测试</option>
                     </select>
-                    <button class="btn btn-sm btn-outline" onclick="clearHistory()">清空历史</button>
+                    <select id="history-sort" class="config-input" onchange="sortHistory()">
+                        <option value="newest">最新优先</option>
+                        <option value="oldest">最早优先</option>
+                    </select>
+                    <button class="btn btn-sm btn-danger" onclick="clearHistory()">
+                        🗑️ 清空
+                    </button>
                 </div>
                 <div id="history-list" class="history-list">
-                    <div class="history-empty">暂无测试记录</div>
+                    <div class="history-empty">
+                        <span class="empty-icon">📋</span>
+                        <p>暂无测试记录</p>
+                        <small>运行测试后，结果将自动保存到这里</small>
+                    </div>
                 </div>
             </div>
         </section>
