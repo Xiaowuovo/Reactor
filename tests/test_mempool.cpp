@@ -383,8 +383,83 @@ void benchmark_random_sizes() {
     BufferPool::print_stats();
 }
 
-int main() {
+// 可配置的性能测试
+void benchmark_configurable(int iterations, int block_size, int num_threads) {
+    cout << "\n=== Configurable Benchmark ===" << endl;
+    cout << "Iterations: " << iterations << endl;
+    cout << "Block Size: " << block_size << " bytes" << endl;
+    cout << "Threads: " << num_threads << endl;
+    
+    atomic<long long> malloc_total{0};
+    atomic<long long> pool_total{0};
+    
+    // malloc测试
+    auto start = high_resolution_clock::now();
+    vector<thread> threads;
+    for (int i = 0; i < num_threads; ++i) {
+        threads.emplace_back([&, iterations, block_size]() {
+            for (int j = 0; j < iterations; ++j) {
+                void* ptr = malloc(block_size);
+                free(ptr);
+            }
+        });
+    }
+    for (auto& t : threads) t.join();
+    auto end = high_resolution_clock::now();
+    auto malloc_time = duration_cast<milliseconds>(end - start).count();
+    
+    threads.clear();
+    
+    // pool测试
+    start = high_resolution_clock::now();
+    for (int i = 0; i < num_threads; ++i) {
+        threads.emplace_back([&, iterations, block_size]() {
+            for (int j = 0; j < iterations; ++j) {
+                void* ptr = BufferPool::allocate(block_size);
+                BufferPool::deallocate(ptr, block_size);
+            }
+        });
+    }
+    for (auto& t : threads) t.join();
+    end = high_resolution_clock::now();
+    auto pool_time = duration_cast<milliseconds>(end - start).count();
+    
+    double speedup = pool_time > 0 ? (double)malloc_time / pool_time : 0.0;
+    long long total_ops = (long long)num_threads * iterations;
+    double malloc_qps = malloc_time > 0 ? total_ops * 1000.0 / malloc_time : 0.0;
+    double pool_qps = pool_time > 0 ? total_ops * 1000.0 / pool_time : 0.0;
+    
+    cout << "\n[Results]" << endl;
+    cout << "malloc/free: " << malloc_time << " ms (" << (long long)malloc_qps << " ops/s)" << endl;
+    cout << "MemoryPool:  " << pool_time << " ms (" << (long long)pool_qps << " ops/s)" << endl;
+    cout << "Speedup: " << fixed << setprecision(2) << speedup << "x" << endl;
+    
+    // 输出JSON格式结果供Web解析
+    cout << "\n{\"malloc_ms\":" << malloc_time 
+         << ",\"pool_ms\":" << pool_time 
+         << ",\"speedup\":" << speedup
+         << ",\"malloc_qps\":" << (long long)malloc_qps
+         << ",\"pool_qps\":" << (long long)pool_qps
+         << ",\"iterations\":" << iterations
+         << ",\"block_size\":" << block_size
+         << ",\"threads\":" << num_threads
+         << "}" << endl;
+}
+
+int main(int argc, char* argv[]) {
     try {
+        // 检查是否有命令行参数（用于Web调用）
+        if (argc >= 4) {
+            int iterations = atoi(argv[1]);
+            int block_size = atoi(argv[2]);
+            int threads = atoi(argv[3]);
+            
+            cout << "=== Web-Triggered Performance Test ===" << endl;
+            benchmark_configurable(iterations, block_size, threads);
+            return 0;
+        }
+        
+        // 默认完整测试
         cout << "========================================" << endl;
         cout << "  Thread-Local Memory Pool Tests" << endl;
         cout << "  (Lock-Free, Zero Contention)" << endl;
@@ -400,7 +475,7 @@ int main() {
         
         // 性能基准测试
         benchmark_single_thread();
-        benchmark_multi_thread();  // ★ 关键测试！展示无锁优势
+        benchmark_multi_thread();
         benchmark_random_sizes();
         
         cout << "\n========================================" << endl;

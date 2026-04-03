@@ -43,10 +43,72 @@ h1{font-size:3rem;margin-bottom:1rem;}
 )";
 }
 
+// 获取系统信息
+std::string getSystemInfo() {
+    std::ostringstream info;
+    info << "{";
+    
+    // CPU信息
+    #ifdef __linux__
+    std::ifstream cpuinfo("/proc/cpuinfo");
+    if (cpuinfo.is_open()) {
+        std::string line;
+        std::string model = "Unknown";
+        int cores = 0;
+        while (std::getline(cpuinfo, line)) {
+            if (line.find("model name") != std::string::npos) {
+                size_t pos = line.find(':');
+                if (pos != std::string::npos) {
+                    model = line.substr(pos + 2);
+                }
+            }
+            if (line.find("processor") != std::string::npos) {
+                cores++;
+            }
+        }
+        info << "\"cpu\":\"" << model << "\",\"cores\":" << cores << ",";
+    }
+    
+    // 内存信息
+    std::ifstream meminfo("/proc/meminfo");
+    if (meminfo.is_open()) {
+        std::string line;
+        while (std::getline(meminfo, line)) {
+            if (line.find("MemTotal") != std::string::npos) {
+                size_t pos = line.find(':');
+                if (pos != std::string::npos) {
+                    std::string mem = line.substr(pos + 1);
+                    size_t kb_pos = mem.find("kB");
+                    if (kb_pos != std::string::npos) {
+                        long long kb = std::stoll(mem.substr(0, kb_pos));
+                        info << "\"memory_gb\":" << (kb / 1024.0 / 1024.0) << ",";
+                    }
+                }
+                break;
+            }
+        }
+    }
+    #else
+    // Windows或其他系统的简化信息
+    info << "\"cpu\":\"Unknown\",\"cores\":4,\"memory_gb\":8,";
+    #endif
+    
+    info << "\"os\":\"Linux\",\"arch\":\"x86_64\"}";
+    return info.str();
+}
+
 void handleStatus(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
     try {
         resp.setJson();
-        resp.body = R"({"status":"running","mempool":"ready","connections":1,"uptime":100})";
+        
+        // 获取系统信息
+        std::string sysInfo = getSystemInfo();
+        
+        // 移除最后的}
+        sysInfo = sysInfo.substr(0, sysInfo.length() - 1);
+        
+        // 添加状态信息
+        resp.body = sysInfo + ",\"status\":\"running\",\"mempool\":\"ready\",\"uptime\":100}";
         std::cout << "✅ 状态查询成功" << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "❌ 状态查询异常: " << e.what() << std::endl;
@@ -56,20 +118,63 @@ void handleStatus(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
     }
 }
 
+// 简单JSON解析辅助函数
+std::string extractJsonValue(const std::string& json, const std::string& key) {
+    size_t pos = json.find("\"" + key + "\":");
+    if (pos == std::string::npos) return "";
+    
+    pos = json.find(":", pos) + 1;
+    while (pos < json.length() && (json[pos] == ' ' || json[pos] == '\t')) pos++;
+    
+    if (pos >= json.length()) return "";
+    
+    // 如果是字符串值
+    if (json[pos] == '"') {
+        size_t start = pos + 1;
+        size_t end = json.find("\"", start);
+        return json.substr(start, end - start);
+    }
+    
+    // 如果是数字或其他值
+    size_t start = pos;
+    size_t end = json.find_first_of(",}", start);
+    return json.substr(start, end - start);
+}
+
 void handleTestMempool(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
     resp.setJson();
     
     try {
-        // 解析配置参数（从POST body）
         std::string config = req.body;
-        std::cout << "📋 收到内存池测试配置 (" << config.length() << " bytes)" << std::endl;
+        std::cout << "📋 收到内存池测试配置: " << config << std::endl;
         
-        // 构建测试命令
-        std::string cmd = "./test_mempool > /tmp/mempool_output.log 2>&1";
-        std::cout << "🔄 执行测试命令..." << std::endl;
+        // 解析配置参数
+        int iterations = 100000;
+        int blockSize = 1024;
+        int threads = 4;
+        
+        std::string iterStr = extractJsonValue(config, "iterations");
+        std::string sizeStr = extractJsonValue(config, "blockSize");
+        std::string threadStr = extractJsonValue(config, "threads");
+        
+        if (!iterStr.empty()) iterations = std::stoi(iterStr);
+        if (!sizeStr.empty()) blockSize = std::stoi(sizeStr);
+        if (!threadStr.empty()) threads = std::stoi(threadStr);
+        
+        std::cout << "� 参数: iterations=" << iterations 
+                  << ", blockSize=" << blockSize 
+                  << ", threads=" << threads << std::endl;
+        
+        // 构建命令行
+        std::ostringstream cmdBuilder;
+        cmdBuilder << "./test_mempool " << iterations << " " << blockSize << " " << threads 
+                   << " > /tmp/mempool_output.log 2>&1";
+        std::string cmd = cmdBuilder.str();
+        
+        std::cout << "🔄 执行: " << cmd << std::endl;
         int ret = system(cmd.c_str());
         
-        // 读取真实测试输出
+        // 读取输出
         std::ifstream logFile("/tmp/mempool_output.log");
         std::string testOutput;
         if (logFile.is_open()) {
@@ -77,18 +182,47 @@ void handleTestMempool(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
             ss << logFile.rdbuf();
             testOutput = ss.str();
             logFile.close();
-            std::cout << "📄 读取输出: " << testOutput.length() << " bytes" << std::endl;
         }
         
-        // 简化JSON响应，避免复杂转义
-        if (ret == 0 || !testOutput.empty()) {
-            // 直接返回简化的成功响应
-            resp.body = "{\"success\":true,\"message\":\"Test completed\",\"timestamp\":\"" + 
-                        std::to_string(time(nullptr)) + "\"}";
-            std::cout << "✅ 内存池测试完成 (exit code: " << ret << ")" << std::endl;
+        if (ret == 0 && !testOutput.empty()) {
+            // 查找JSON结果（在输出的最后一行）
+            size_t jsonStart = testOutput.rfind('{');
+            if (jsonStart != std::string::npos) {
+                std::string jsonResult = testOutput.substr(jsonStart);
+                size_t jsonEnd = jsonResult.find('}');
+                if (jsonEnd != std::string::npos) {
+                    jsonResult = jsonResult.substr(0, jsonEnd + 1);
+                    
+                    // 提取关键指标
+                    std::string mallocMs = extractJsonValue(jsonResult, "malloc_ms");
+                    std::string poolMs = extractJsonValue(jsonResult, "pool_ms");
+                    std::string speedup = extractJsonValue(jsonResult, "speedup");
+                    std::string mallocQps = extractJsonValue(jsonResult, "malloc_qps");
+                    std::string poolQps = extractJsonValue(jsonResult, "pool_qps");
+                    
+                    // 构建响应
+                    resp.body = "{\"success\":true,"
+                                "\"malloc_ms\":" + mallocMs + ","
+                                "\"pool_ms\":" + poolMs + ","
+                                "\"speedup\":" + speedup + ","
+                                "\"malloc_qps\":" + mallocQps + ","
+                                "\"pool_qps\":" + poolQps + ","
+                                "\"iterations\":" + std::to_string(iterations) + ","
+                                "\"block_size\":" + std::to_string(blockSize) + ","
+                                "\"threads\":" + std::to_string(threads) + ","
+                                "\"timestamp\":" + std::to_string(time(nullptr)) + "}";
+                    
+                    std::cout << "✅ 测试完成: malloc=" << mallocMs << "ms, pool=" << poolMs 
+                              << "ms, speedup=" << speedup << "x" << std::endl;
+                    return;
+                }
+            }
+            
+            // 如果没找到JSON，返回简化结果
+            resp.body = "{\"success\":true,\"message\":\"Test completed but no metrics found\"}";
         } else {
             resp.body = "{\"success\":false,\"error\":\"Test execution failed\"}";
-            std::cout << "❌ 内存池测试失败 (exit code: " << ret << ")" << std::endl;
+            std::cout << "❌ 测试失败 (exit code: " << ret << ")" << std::endl;
         }
     } catch (const std::exception& e) {
         std::cerr << "❌ 异常: " << e.what() << std::endl;

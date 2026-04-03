@@ -138,6 +138,20 @@ async function fetchServerStatus() {
         updateElement('mempool-status', data.mempool || '就绪');
         updateElement('connections', data.connections || 0);
         
+        // 显示系统硬件信息
+        if (data.cpu) {
+            updateElement('system-cpu', data.cpu);
+        }
+        if (data.cores) {
+            updateElement('system-cores', data.cores + ' 核心');
+        }
+        if (data.memory_gb) {
+            updateElement('system-memory', data.memory_gb.toFixed(1) + ' GB');
+        }
+        if (data.os) {
+            updateElement('system-os', data.os + ' ' + (data.arch || ''));
+        }
+        
         // 更新状态指示器
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
@@ -749,23 +763,13 @@ async function runProfessionalTest(type) {
 
         if (data.success) {
             testState[type].result = data;
-            
-            // 构建模拟结果用于展示
-            const mockResult = {
-                success: true,
-                result: data.message || '测试已完成',
-                timestamp: data.timestamp
-            };
-            
-            displayTestResult(type, mockResult, config);
+            displayTestResult(type, data, config);
             
             // 保存到历史
-            if (config.saveHistory !== false) {
-                saveToHistory(type, config, mockResult);
-            }
+            saveToHistory(type, config, data);
 
-            addLog(`✅ ${testName}测试完成`, 'success');
-            showNotification('测试完成！', 'success');
+            addLog(`✅ ${testName}测试完成 - 加速: ${data.speedup?.toFixed(2)}x`, 'success');
+            showNotification(`测试完成！加速 ${data.speedup?.toFixed(2)}x`, 'success');
             confetti();
         } else {
             displayTestError(type, data.error || '测试失败');
@@ -825,7 +829,7 @@ function simulateTestProgress(type, config) {
     }, 1000);
 }
 
-// 显示测试结果
+// 显示测试结果（真实数据版）
 function displayTestResult(type, data, config) {
     const resultDiv = document.getElementById(`${type}-result`);
     const progressDiv = document.getElementById(`${type}-progress`);
@@ -836,93 +840,78 @@ function displayTestResult(type, data, config) {
 
     const testName = type === 'mempool' ? '内存池性能' : '网络性能';
     
-    // 生成详细报告
     let html = `
         <div class="result-header">
-            <div class="result-title">
-                ✅ ${testName}测试报告
-            </div>
-            <div>
-                <span class="badge badge-success">测试完成</span>
-            </div>
+            <div class="result-title">✅ ${testName}测试报告</div>
+            <div><span class="badge badge-success">测试完成</span></div>
         </div>
-
         <div class="result-tabs">
             <button class="result-tab active" onclick="switchResultTab('${type}', 'summary')">概览</button>
-            <button class="result-tab" onclick="switchResultTab('${type}', 'metrics')">详细指标</button>
             <button class="result-tab" onclick="switchResultTab('${type}', 'config')">测试配置</button>
         </div>
-
         <div id="${type}-result-summary" class="result-content active">
             <div class="result-grid">
     `;
 
-    if (type === 'mempool') {
+    if (type === 'mempool' && data.malloc_ms !== undefined) {
+        // 真实内存池测试数据
+        const improvement = ((data.malloc_ms - data.pool_ms) / data.malloc_ms * 100).toFixed(1);
         html += `
-                <div class="result-metric">
-                    <div class="result-metric-label">单线程加速比</div>
-                    <div class="result-metric-value">3.75x</div>
+                <div class="result-metric highlight">
+                    <div class="result-metric-label">性能提升</div>
+                    <div class="result-metric-value">${data.speedup?.toFixed(2)}x</div>
+                    <div class="result-metric-sub">${improvement}% 更快</div>
                 </div>
                 <div class="result-metric">
-                    <div class="result-metric-label">多线程加速比</div>
-                    <div class="result-metric-value">5.25x</div>
+                    <div class="result-metric-label">malloc/free</div>
+                    <div class="result-metric-value">${data.malloc_ms} ms</div>
+                    <div class="result-metric-sub">${formatNumber(data.malloc_qps)} ops/s</div>
+                </div>
+                <div class="result-metric success">
+                    <div class="result-metric-label">MemoryPool</div>
+                    <div class="result-metric-value">${data.pool_ms} ms</div>
+                    <div class="result-metric-sub">${formatNumber(data.pool_qps)} ops/s</div>
                 </div>
                 <div class="result-metric">
                     <div class="result-metric-label">总操作数</div>
-                    <div class="result-metric-value">${config.iterations.toLocaleString()}</div>
-                </div>
-                <div class="result-metric">
-                    <div class="result-metric-label">平均延迟</div>
-                    <div class="result-metric-value">12.3μs</div>
+                    <div class="result-metric-value">${(data.iterations * data.threads).toLocaleString()}</div>
+                    <div class="result-metric-sub">${data.threads} 线程</div>
                 </div>
         `;
-    } else {
+    } else if (type === 'network' && data.qps !== undefined) {
+        // 真实网络测试数据
         html += `
                 <div class="result-metric">
                     <div class="result-metric-label">平均QPS</div>
-                    <div class="result-metric-value">52,376</div>
+                    <div class="result-metric-value">${formatNumber(data.qps)}</div>
                 </div>
                 <div class="result-metric">
                     <div class="result-metric-label">总请求数</div>
-                    <div class="result-metric-value">${config.requests.toLocaleString()}</div>
+                    <div class="result-metric-value">${data.total_requests?.toLocaleString()}</div>
                 </div>
                 <div class="result-metric">
                     <div class="result-metric-label">成功率</div>
-                    <div class="result-metric-value">99.8%</div>
+                    <div class="result-metric-value">${data.success_rate}%</div>
                 </div>
                 <div class="result-metric">
                     <div class="result-metric-label">平均延迟</div>
-                    <div class="result-metric-value">13.5μs</div>
+                    <div class="result-metric-value">${data.avg_latency}μs</div>
+                </div>
+        `;
+    } else {
+        // 无详细数据时的简化显示
+        html += `
+                <div class="result-metric">
+                    <div class="result-metric-label">测试状态</div>
+                    <div class="result-metric-value">✓</div>
+                    <div class="result-metric-sub">${data.message || '完成'}</div>
                 </div>
         `;
     }
 
     html += `
             </div>
-            <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">百分位数延迟</h4>
-            <table class="result-table">
-                <thead>
-                    <tr>
-                        <th>百分位</th>
-                        <th>延迟 (μs)</th>
-                        <th>说明</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>P50</td><td>10.2</td><td>中位数</td></tr>
-                    <tr><td>P75</td><td>12.5</td><td>75%用户</td></tr>
-                    <tr><td>P90</td><td>15.8</td><td>90%用户</td></tr>
-                    <tr><td>P95</td><td>18.3</td><td>95%用户</td></tr>
-                    <tr><td>P99</td><td>90.5</td><td>99%用户</td></tr>
-                </tbody>
-            </table>
         </div>
-
-        <div id="${type}-result-metrics" class="result-content">
-            <h4 style="margin-bottom: 1rem;">性能指标详情</h4>
-            <pre style="background: var(--dark-lighter); padding: 1rem; border-radius: 6px; overflow-x: auto;">${data.result || 'N/A'}</pre>
-        </div>
-
         <div id="${type}-result-config" class="result-content">
             <h4 style="margin-bottom: 1rem;">测试配置</h4>
             <pre style="background: var(--dark-lighter); padding: 1rem; border-radius: 6px; overflow-x: auto;">${JSON.stringify(config, null, 2)}</pre>
@@ -930,6 +919,14 @@ function displayTestResult(type, data, config) {
     `;
 
     resultDiv.innerHTML = html;
+}
+
+// 格式化大数字
+function formatNumber(num) {
+    if (!num) return 'N/A';
+    if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(2) + 'K';
+    return num.toLocaleString();
 }
 
 // 显示测试错误
@@ -977,49 +974,72 @@ function stopTest(type) {
     showNotification('测试已停止', 'warning');
 }
 
-// 导出测试结果
+// 导出测试结果（修复：导出真实结果而非配置）
 function exportTestResults(type) {
     const result = testState[type].result;
-    if (!result) {
+    const config = testState[type].config;
+    
+    if (!result || !config) {
         showNotification('没有可导出的测试结果', 'warning');
         return;
     }
 
-    const config = testState[type].config;
-    const exportData = {
-        type: type,
-        timestamp: new Date().toISOString(),
-        config: config,
-        result: result
-    };
-
-    // 创建下载
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${type}-test-${Date.now()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-
-    addLog(`💾 测试结果已导出: ${link.download}`, 'success');
-    showNotification('测试结果已导出', 'success');
+    // CSV格式导出（适合Excel分析）
+    if (type === 'mempool' && result.malloc_ms !== undefined) {
+        let csv = 'Metric,Value\n';
+        csv += `Test Type,Memory Pool Performance\n`;
+        csv += `Timestamp,${new Date().toISOString()}\n`;
+        csv += `Iterations,${result.iterations}\n`;
+        csv += `Block Size (bytes),${result.block_size}\n`;
+        csv += `Threads,${result.threads}\n`;
+        csv += `malloc Time (ms),${result.malloc_ms}\n`;
+        csv += `Pool Time (ms),${result.pool_ms}\n`;
+        csv += `Speedup,${result.speedup}\n`;
+        csv += `malloc QPS,${result.malloc_qps}\n`;
+        csv += `Pool QPS,${result.pool_qps}\n`;
+        csv += `Improvement (%),${((result.malloc_ms - result.pool_ms) / result.malloc_ms * 100).toFixed(2)}\n`;
+        
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `mempool-results-${Date.now()}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        
+        addLog(`💾 测试结果已导出为CSV: ${link.download}`, 'success');
+        showNotification('测试结果已导出为CSV', 'success');
+    } else {
+        // JSON格式导出
+        const exportData = {
+            type: type,
+            timestamp: new Date().toISOString(),
+            config: config,
+            result: result
+        };
+        
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${type}-results-${Date.now()}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        
+        addLog(`💾 测试结果已导出: ${link.download}`, 'success');
+        showNotification('测试结果已导出', 'success');
+    }
 }
 
-// 保存到历史记录
+// 保存到历史记录（使用真实数据）
 function saveToHistory(type, config, result) {
     const historyItem = {
         id: Date.now(),
         type: type,
         timestamp: new Date().toISOString(),
         config: config,
-        result: result,
-        summary: {
-            qps: type === 'mempool' ? 375000 : 52376,
-            latency: type === 'mempool' ? 12.3 : 13.5,
-            successRate: 99.8
-        }
+        result: result
     };
 
     testState.history.unshift(historyItem);
@@ -1030,6 +1050,7 @@ function saveToHistory(type, config, result) {
     }
 
     localStorage.setItem('testHistory', JSON.stringify(testState.history));
+    loadTestHistory();
     addLog('📝 测试结果已保存到历史记录', 'info');
 }
 
@@ -1043,7 +1064,7 @@ function toggleTestHistory() {
     }
 }
 
-// 加载测试历史
+// 加载测试历史（显示真实数据）
 function loadTestHistory() {
     const historyList = document.getElementById('history-list');
     
@@ -1058,6 +1079,24 @@ function loadTestHistory() {
         const timeStr = date.toLocaleString('zh-CN');
         const testName = item.type === 'mempool' ? '内存池测试' : '网络测试';
         
+        // 提取真实结果数据
+        let statsHtml = '';
+        if (item.type === 'mempool' && item.result.speedup) {
+            statsHtml = `
+                <div class="history-item-stat">加速: <strong>${item.result.speedup.toFixed(2)}x</strong></div>
+                <div class="history-item-stat">Pool QPS: <strong>${formatNumber(item.result.pool_qps)}</strong></div>
+                <div class="history-item-stat">线程: <strong>${item.result.threads}</strong></div>
+            `;
+        } else if (item.type === 'network' && item.result.qps) {
+            statsHtml = `
+                <div class="history-item-stat">QPS: <strong>${formatNumber(item.result.qps)}</strong></div>
+                <div class="history-item-stat">延迟: <strong>${item.result.avg_latency}μs</strong></div>
+                <div class="history-item-stat">成功率: <strong>${item.result.success_rate}%</strong></div>
+            `;
+        } else {
+            statsHtml = `<div class="history-item-stat">测试完成</div>`;
+        }
+        
         html += `
             <div class="history-item" onclick="viewHistoryItem(${item.id})">
                 <div class="history-item-header">
@@ -1065,9 +1104,7 @@ function loadTestHistory() {
                     <span class="history-item-time">${timeStr}</span>
                 </div>
                 <div class="history-item-stats">
-                    <div class="history-item-stat">QPS: <strong>${item.summary.qps.toLocaleString()}</strong></div>
-                    <div class="history-item-stat">延迟: <strong>${item.summary.latency}μs</strong></div>
-                    <div class="history-item-stat">成功率: <strong>${item.summary.successRate}%</strong></div>
+                    ${statsHtml}
                 </div>
             </div>
         `;
@@ -1117,8 +1154,4 @@ function clearHistory() {
     }
 }
 
-// 对比测试结果
-function compareResults(type) {
-    showNotification('结果对比功能开发中...', 'info');
-    addLog('📊 结果对比功能即将推出', 'info');
-}
+// 已删除结果对比功能
