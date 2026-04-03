@@ -54,6 +54,16 @@ public:
             }
         }
         
+        // 读取POST body
+        if (method == "POST" && headers.count("Content-Length")) {
+            int content_length = std::stoi(headers["Content-Length"]);
+            if (content_length > 0) {
+                std::ostringstream body_stream;
+                body_stream << iss.rdbuf();
+                body = body_stream.str();
+            }
+        }
+        
         return true;
     }
     

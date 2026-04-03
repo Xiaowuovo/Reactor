@@ -749,11 +749,19 @@ async function runProfessionalTest(type) {
 
         if (data.success) {
             testState[type].result = data;
-            displayTestResult(type, data, config);
+            
+            // 构建模拟结果用于展示
+            const mockResult = {
+                success: true,
+                result: data.message || '测试已完成',
+                timestamp: data.timestamp
+            };
+            
+            displayTestResult(type, mockResult, config);
             
             // 保存到历史
-            if (config.saveHistory) {
-                saveToHistory(type, config, data);
+            if (config.saveHistory !== false) {
+                saveToHistory(type, config, mockResult);
             }
 
             addLog(`✅ ${testName}测试完成`, 'success');
