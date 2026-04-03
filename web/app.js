@@ -131,6 +131,18 @@ function updateUptime() {
 async function fetchServerStatus() {
     try {
         const response = await fetch('/api/status');
+        
+        // 检查响应状态
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        // 检查Content-Type
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Invalid response type');
+        }
+        
         const data = await response.json();
         
         // 更新UI
@@ -155,17 +167,21 @@ async function fetchServerStatus() {
         // 更新状态指示器
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
-        if (data.status === 'running') {
-            statusDot.style.background = 'var(--success)';
-            statusText.textContent = '运行中';
-        } else {
-            statusDot.style.background = 'var(--danger)';
-            statusText.textContent = '异常';
+        if (statusDot && statusText) {
+            if (data.status === 'running') {
+                statusDot.style.background = 'var(--success)';
+                statusText.textContent = '运行中';
+            } else {
+                statusDot.style.background = 'var(--danger)';
+                statusText.textContent = '异常';
+            }
         }
     } catch (error) {
         console.error('获取状态失败:', error);
-        document.getElementById('status-dot').style.background = 'var(--warning)';
-        document.getElementById('status-text').textContent = '连接失败';
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        if (statusDot) statusDot.style.background = 'var(--warning)';
+        if (statusText) statusText.textContent = '连接失败';
     }
 }
 
@@ -755,6 +771,19 @@ async function runProfessionalTest(type) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config)
         });
+
+        // 检查响应状态
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        // 检查Content-Type
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('非JSON响应:', text.substring(0, 200));
+            throw new Error('服务器返回非JSON响应');
+        }
 
         const data = await response.json();
 
