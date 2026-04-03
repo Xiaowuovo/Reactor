@@ -8,6 +8,11 @@ const state = {
         cpu: [],
         memory: [],
         network: []
+    },
+    hardware: null,  // 硬件信息
+    confirmedConfig: {
+        mempool: null,  // 已确认的内存池配置
+        network: null   // 已确认的网络配置
     }
 };
 
@@ -24,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCharts();
     startStatusUpdates();
     startSystemMonitoring();
+    fetchHardwareInfo();  // 获取硬件信息
     
     addLog('🎉 Web界面加载完成', 'success');
     addLog('📊 所有模块已就绪', 'success');
@@ -206,6 +212,54 @@ function updateChartTheme() {
 // ========== 实时系统监控（图表模块已移除） ==========
 function startSystemMonitoring() {
     // 图表模块已移除，此函数保留以兼容调用
+}
+
+// ========== 硬件信息获取 ==========
+async function fetchHardwareInfo() {
+    try {
+        const response = await fetch('/api/hardware');
+        if (!response.ok) throw new Error('获取硬件信息失败');
+        
+        const data = await response.json();
+        state.hardware = data;
+        
+        // 更新UI
+        updateElement('hw-cpu', data.cpu || '未知');
+        updateElement('hw-cores', data.cores ? `${data.cores} 核心` : '-');
+        updateElement('hw-memory', data.memory || '-');
+        updateElement('hw-os', data.os || '-');
+        
+        addLog('🖥️ 硬件信息获取成功', 'success');
+    } catch (error) {
+        console.error('获取硬件信息失败:', error);
+        updateElement('hw-cpu', '获取失败');
+    }
+}
+
+// ========== 配置确认 ==========
+function confirmConfig(type) {
+    const config = getTestConfig(type);
+    state.confirmedConfig[type] = config;
+    
+    // 更新UI状态
+    const statusEl = document.getElementById(`${type}-config-status`);
+    const btnEl = document.getElementById(`${type}-confirm-btn`);
+    
+    if (statusEl) {
+        statusEl.textContent = '已确认 ✓';
+        statusEl.classList.add('confirmed');
+    }
+    
+    if (btnEl) {
+        btnEl.innerHTML = '<span class="btn-icon">✓</span> 配置已锁定';
+    }
+    
+    const testName = type === 'mempool' ? '内存池' : '网络';
+    addLog(`✓ ${testName}测试配置已确认`, 'success');
+    showNotification(`${testName}测试配置已确认并锁定`, 'success');
+    
+    // 显示确认的配置摘要
+    console.log(`[${type}] 已确认配置:`, config);
 }
 
 // ========== 测试功能 ==========
@@ -588,7 +642,8 @@ async function runProfessionalTest(type) {
         return;
     }
 
-    const config = getTestConfig(type);
+    // 优先使用已确认的配置，否则使用当前界面配置
+    const config = state.confirmedConfig[type] || getTestConfig(type);
     testState[type].config = config;
     testState[type].running = true;
     testState[type].startTime = Date.now();

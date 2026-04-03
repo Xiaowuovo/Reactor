@@ -9,6 +9,12 @@
 #include <random>
 #include <algorithm>
 #include <vector>
+#include <fstream>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <intrin.h>
+#endif
 
 SimpleHttpServer* g_server = nullptr;
 std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
@@ -57,6 +63,107 @@ void handleStatus(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
          << "\"timestamp\":" << time(nullptr) << "}";
     
     resp.body = json.str();
+}
+
+// 硬件信息（启动时获取一次）
+static std::string cachedHardwareInfo;
+
+std::string getHardwareInfo() {
+    if (!cachedHardwareInfo.empty()) {
+        return cachedHardwareInfo;
+    }
+    
+    unsigned int cores = std::thread::hardware_concurrency();
+    if (cores == 0) cores = 4;
+    
+    std::string cpuName = "CPU";
+    std::string osName = "Unknown";
+    std::string memoryStr = "Unknown";
+    
+#ifdef _WIN32
+    // Windows系统
+    osName = "Windows";
+    
+    // 获取CPU信息
+    char cpuBrand[0x40] = {0};
+    int cpuInfo[4] = {0};
+    __cpuid(cpuInfo, 0x80000000);
+    unsigned int nExIds = cpuInfo[0];
+    if (nExIds >= 0x80000004) {
+        __cpuid(cpuInfo, 0x80000002);
+        memcpy(cpuBrand, cpuInfo, sizeof(cpuInfo));
+        __cpuid(cpuInfo, 0x80000003);
+        memcpy(cpuBrand + 16, cpuInfo, sizeof(cpuInfo));
+        __cpuid(cpuInfo, 0x80000004);
+        memcpy(cpuBrand + 32, cpuInfo, sizeof(cpuInfo));
+        cpuName = cpuBrand;
+        // 去除前导空格
+        size_t start = cpuName.find_first_not_of(' ');
+        if (start != std::string::npos) cpuName = cpuName.substr(start);
+    }
+    
+    // 获取内存信息
+    MEMORYSTATUSEX memInfo;
+    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+    if (GlobalMemoryStatusEx(&memInfo)) {
+        double totalGB = memInfo.ullTotalPhys / (1024.0 * 1024.0 * 1024.0);
+        std::ostringstream memStream;
+        memStream << std::fixed << std::setprecision(1) << totalGB << " GB";
+        memoryStr = memStream.str();
+    }
+#else
+    // Linux/Unix系统
+    osName = "Linux";
+    
+    // 尝试读取/proc/cpuinfo
+    std::ifstream cpuFile("/proc/cpuinfo");
+    if (cpuFile.is_open()) {
+        std::string line;
+        while (std::getline(cpuFile, line)) {
+            if (line.find("model name") != std::string::npos) {
+                size_t pos = line.find(':');
+                if (pos != std::string::npos) {
+                    cpuName = line.substr(pos + 2);
+                }
+                break;
+            }
+        }
+    }
+    
+    // 尝试读取/proc/meminfo
+    std::ifstream memFile("/proc/meminfo");
+    if (memFile.is_open()) {
+        std::string line;
+        while (std::getline(memFile, line)) {
+            if (line.find("MemTotal") != std::string::npos) {
+                size_t pos = line.find(':');
+                if (pos != std::string::npos) {
+                    std::string memKB = line.substr(pos + 1);
+                    long long kb = std::stoll(memKB);
+                    double gb = kb / (1024.0 * 1024.0);
+                    std::ostringstream memStream;
+                    memStream << std::fixed << std::setprecision(1) << gb << " GB";
+                    memoryStr = memStream.str();
+                }
+                break;
+            }
+        }
+    }
+#endif
+    
+    std::ostringstream json;
+    json << "{\"cpu\":\"" << cpuName << "\","
+         << "\"cores\":" << cores << ","
+         << "\"memory\":\"" << memoryStr << "\","
+         << "\"os\":\"" << osName << "\"}";
+    
+    cachedHardwareInfo = json.str();
+    return cachedHardwareInfo;
+}
+
+void handleHardware(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
+    resp.setJson();
+    resp.body = getHardwareInfo();
 }
 
 // JSON解析辅助函数
@@ -549,6 +656,7 @@ int main(int argc, char* argv[]) {
         
         server.addRoute("/", handleIndex);
         server.addRoute("/api/status", handleStatus);
+        server.addRoute("/api/hardware", handleHardware);
         server.addRoute("/api/test/mempool", handleTestMempool);
         server.addRoute("/api/test/network", handleTestNetwork);
         server.addRoute("/api/data", handleData);

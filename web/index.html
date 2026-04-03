@@ -106,6 +106,29 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 硬件信息 -->
+            <div class="hardware-info" id="hardware-info">
+                <h4>🖥️ 系统硬件信息</h4>
+                <div class="hardware-grid">
+                    <div class="hardware-item">
+                        <span class="hardware-label">CPU</span>
+                        <span class="hardware-value" id="hw-cpu">获取中...</span>
+                    </div>
+                    <div class="hardware-item">
+                        <span class="hardware-label">核心数</span>
+                        <span class="hardware-value" id="hw-cores">-</span>
+                    </div>
+                    <div class="hardware-item">
+                        <span class="hardware-label">内存</span>
+                        <span class="hardware-value" id="hw-memory">-</span>
+                    </div>
+                    <div class="hardware-item">
+                        <span class="hardware-label">操作系统</span>
+                        <span class="hardware-value" id="hw-os">-</span>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- 性能测试区 -->
@@ -236,6 +259,15 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- 配置确认 -->
+                <div class="config-confirm">
+                    <button class="btn btn-secondary" onclick="confirmConfig('mempool')" id="mempool-confirm-btn">
+                        <span class="btn-icon">✓</span>
+                        确认配置
+                    </button>
+                    <span class="config-status" id="mempool-config-status">未确认</span>
                 </div>
 
                 <!-- 测试控制 -->
@@ -401,6 +433,15 @@
                     </div>
                 </div>
 
+                <!-- 配置确认 -->
+                <div class="config-confirm">
+                    <button class="btn btn-secondary" onclick="confirmConfig('network')" id="network-confirm-btn">
+                        <span class="btn-icon">✓</span>
+                        确认配置
+                    </button>
+                    <span class="config-status" id="network-config-status">未确认</span>
+                </div>
+
                 <!-- 测试控制 -->
                 <div class="test-controls">
                     <button class="btn btn-success btn-lg" onclick="runProfessionalTest('network')">
@@ -437,7 +478,7 @@
                             <span class="stat-mini-value" id="network-avg-latency">-</span>
                         </div>
                         <div class="stat-mini">
-                            <span class="stat-mini-label">成功率</span>
+                            <span class="stat-mini-label">等待时间</span>
                             <span class="stat-mini-value" id="network-success-rate">-</span>
                         </div>
                     </div>

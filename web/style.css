@@ -1470,6 +1470,86 @@ nav .container {
     color: white;
 }
 
+/* 硬件信息 */
+.hardware-info {
+    background: var(--dark-lighter);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+    border: 1px solid var(--border);
+}
+
+.hardware-info h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.hardware-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.hardware-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--dark);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.hardware-label {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.hardware-value {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* 配置确认 */
+.config-confirm {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    background: var(--dark);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.config-status {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    background: var(--dark-lighter);
+}
+
+.config-status.confirmed {
+    color: var(--success);
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--success);
+}
+
+.btn-secondary {
+    background: var(--dark-lighter);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
 /* 响应式 */
 @media (max-width: 768px) {
     .config-grid {
