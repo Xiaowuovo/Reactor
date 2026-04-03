@@ -44,8 +44,16 @@ h1{font-size:3rem;margin-bottom:1rem;}
 }
 
 void handleStatus(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
-    resp.setJson();
-    resp.body = R"({"status":"running","mempool":"ready","connections":1,"uptime":100})";
+    try {
+        resp.setJson();
+        resp.body = R"({"status":"running","mempool":"ready","connections":1,"uptime":100})";
+        std::cout << "✅ 状态查询成功" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "❌ 状态查询异常: " << e.what() << std::endl;
+        resp.setStatus(500);
+        resp.setJson();
+        resp.body = R"({"success":false,"error":"Status check failed"})";
+    }
 }
 
 void handleTestMempool(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
@@ -130,12 +138,20 @@ void handleTestNetwork(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
 }
 
 void handleData(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
-    resp.setJson();
-    std::string type = "all";
-    if (req.params.count("type")) {
-        type = req.params.at("type");
+    try {
+        resp.setJson();
+        std::string type = "all";
+        if (req.params.count("type")) {
+            type = req.params.at("type");
+        }
+        resp.body = "{\"success\":true,\"file\":\"output/data/" + type + ".csv\"}";
+        std::cout << "✅ 数据请求成功: " << type << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "❌ 数据请求异常: " << e.what() << std::endl;
+        resp.setStatus(500);
+        resp.setJson();
+        resp.body = R"({"success":false,"error":"Data request failed"})";
     }
-    resp.body = "{\"success\":true,\"file\":\"output/data/" + type + ".csv\"}";
 }
 
 int main(int argc, char* argv[]) {

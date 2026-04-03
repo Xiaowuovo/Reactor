@@ -231,14 +231,27 @@ private:
             }
             
             // 路由匹配
-            if (routes_.find(req.path) != routes_.end()) {
-                routes_[req.path](req, resp);
-            } else {
-                // 尝试静态文件
-                if (!serveStaticFile(req.path, resp)) {
-                    resp.setStatus(404);
-                    resp.body = "<h1>404 Not Found</h1>";
+            try {
+                if (routes_.find(req.path) != routes_.end()) {
+                    std::cout << "📍 处理请求: " << req.method << " " << req.path << std::endl;
+                    routes_[req.path](req, resp);
+                } else {
+                    // 尝试静态文件
+                    if (!serveStaticFile(req.path, resp)) {
+                        resp.setStatus(404);
+                        resp.body = "<h1>404 Not Found</h1>";
+                    }
                 }
+            } catch (const std::exception& e) {
+                std::cerr << "❌ 路由处理异常: " << req.path << " - " << e.what() << std::endl;
+                resp.setStatus(500);
+                resp.setJson();
+                resp.body = "{\"success\":false,\"error\":\"Internal server error\"}";
+            } catch (...) {
+                std::cerr << "❌ 路由处理未知异常: " << req.path << std::endl;
+                resp.setStatus(500);
+                resp.setJson();
+                resp.body = "{\"success\":false,\"error\":\"Unknown error\"}";
             }
             
             sendResponse(client_fd, resp);
