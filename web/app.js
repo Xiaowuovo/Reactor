@@ -883,7 +883,7 @@ function displayTestResult(type, data, config) {
     `;
 
     if (type === 'mempool' && data.malloc_ms !== undefined) {
-        // 真实内存池测试数据
+        // 内存池测试数据 - 完整参数支持
         const improvement = ((data.malloc_ms - data.pool_ms) / data.malloc_ms * 100).toFixed(1);
         html += `
                 <div class="result-metric highlight">
@@ -903,30 +903,68 @@ function displayTestResult(type, data, config) {
                 </div>
                 <div class="result-metric">
                     <div class="result-metric-label">总操作数</div>
-                    <div class="result-metric-value">${(data.iterations * data.threads).toLocaleString()}</div>
-                    <div class="result-metric-sub">${data.threads} 线程</div>
+                    <div class="result-metric-value">${formatNumber(data.total_ops || data.iterations * data.threads)}</div>
+                    <div class="result-metric-sub">${data.threads} 线程 | ${data.mode || 'quick'}</div>
                 </div>
         `;
+        // 百分位延迟
+        if (data.percentiles) {
+            html += `
+            </div>
+            <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">📊 百分位延迟 (μs)</h4>
+            <div class="result-grid">
+                <div class="result-metric"><div class="result-metric-label">P50</div><div class="result-metric-value">${data.percentiles.p50}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P75</div><div class="result-metric-value">${data.percentiles.p75}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P90</div><div class="result-metric-value">${data.percentiles.p90}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P99</div><div class="result-metric-value">${data.percentiles.p99}</div></div>
+            `;
+        }
     } else if (type === 'network' && data.qps !== undefined) {
-        // 真实网络测试数据
+        // 网络测试数据 - 完整参数支持
         html += `
-                <div class="result-metric">
-                    <div class="result-metric-label">平均QPS</div>
+                <div class="result-metric highlight">
+                    <div class="result-metric-label">QPS</div>
                     <div class="result-metric-value">${formatNumber(data.qps)}</div>
+                    <div class="result-metric-sub">${data.mode || 'stress'} 模式</div>
                 </div>
                 <div class="result-metric">
                     <div class="result-metric-label">总请求数</div>
-                    <div class="result-metric-value">${data.total_requests?.toLocaleString()}</div>
+                    <div class="result-metric-value">${formatNumber(data.total_requests)}</div>
+                    <div class="result-metric-sub">${data.connections} 连接</div>
                 </div>
-                <div class="result-metric">
+                <div class="result-metric success">
                     <div class="result-metric-label">成功率</div>
                     <div class="result-metric-value">${data.success_rate}%</div>
+                    <div class="result-metric-sub">${data.keepalive ? 'Keep-Alive' : '短连接'}</div>
                 </div>
                 <div class="result-metric">
                     <div class="result-metric-label">平均延迟</div>
                     <div class="result-metric-value">${data.avg_latency}μs</div>
+                    <div class="result-metric-sub">${data.duration || 15}s 测试</div>
                 </div>
         `;
+        // 吞吐量
+        if (data.throughput_mbps) {
+            html += `
+                <div class="result-metric">
+                    <div class="result-metric-label">吞吐量</div>
+                    <div class="result-metric-value">${data.throughput_mbps} MB/s</div>
+                    <div class="result-metric-sub">${data.msg_size || 1024} bytes/msg</div>
+                </div>
+            `;
+        }
+        // 百分位延迟
+        if (data.percentiles) {
+            html += `
+            </div>
+            <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">📊 百分位延迟 (μs)</h4>
+            <div class="result-grid">
+                <div class="result-metric"><div class="result-metric-label">P50</div><div class="result-metric-value">${data.percentiles.p50}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P90</div><div class="result-metric-value">${data.percentiles.p90}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P99</div><div class="result-metric-value">${data.percentiles.p99}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P99.9</div><div class="result-metric-value">${data.percentiles.p999}</div></div>
+            `;
+        }
     } else {
         // 无详细数据时的简化显示
         html += `
