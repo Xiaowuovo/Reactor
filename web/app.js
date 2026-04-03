@@ -783,14 +783,20 @@ function displayTestResult(type, data, config) {
         `;
         // 百分位延迟
         if (data.percentiles) {
+            const formatLatency = (v) => {
+                if (v === undefined || v === null) return '-';
+                const num = parseFloat(v);
+                if (isNaN(num) || num === 0) return '-';
+                return num < 1 ? num.toFixed(4) : num.toFixed(2);
+            };
             html += `
             </div>
             <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">📊 百分位延迟 (μs)</h4>
             <div class="result-grid">
-                <div class="result-metric"><div class="result-metric-label">P50</div><div class="result-metric-value">${data.percentiles.p50}</div></div>
-                <div class="result-metric"><div class="result-metric-label">P75</div><div class="result-metric-value">${data.percentiles.p75}</div></div>
-                <div class="result-metric"><div class="result-metric-label">P90</div><div class="result-metric-value">${data.percentiles.p90}</div></div>
-                <div class="result-metric"><div class="result-metric-label">P99</div><div class="result-metric-value">${data.percentiles.p99}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P50</div><div class="result-metric-value">${formatLatency(data.percentiles.p50)}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P75</div><div class="result-metric-value">${formatLatency(data.percentiles.p75)}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P90</div><div class="result-metric-value">${formatLatency(data.percentiles.p90)}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P99</div><div class="result-metric-value">${formatLatency(data.percentiles.p99)}</div></div>
             `;
         }
     } else if (type === 'network' && data.qps !== undefined) {
@@ -829,14 +835,20 @@ function displayTestResult(type, data, config) {
         }
         // 百分位延迟
         if (data.percentiles) {
+            const formatLatency = (v) => {
+                if (v === undefined || v === null) return '-';
+                const num = parseFloat(v);
+                if (isNaN(num) || num === 0) return '-';
+                return num < 1 ? num.toFixed(4) : num.toFixed(2);
+            };
             html += `
             </div>
             <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">📊 百分位延迟 (μs)</h4>
             <div class="result-grid">
-                <div class="result-metric"><div class="result-metric-label">P50</div><div class="result-metric-value">${data.percentiles.p50}</div></div>
-                <div class="result-metric"><div class="result-metric-label">P90</div><div class="result-metric-value">${data.percentiles.p90}</div></div>
-                <div class="result-metric"><div class="result-metric-label">P99</div><div class="result-metric-value">${data.percentiles.p99}</div></div>
-                <div class="result-metric"><div class="result-metric-label">P99.9</div><div class="result-metric-value">${data.percentiles.p999}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P50</div><div class="result-metric-value">${formatLatency(data.percentiles.p50)}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P90</div><div class="result-metric-value">${formatLatency(data.percentiles.p90)}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P99</div><div class="result-metric-value">${formatLatency(data.percentiles.p99)}</div></div>
+                <div class="result-metric"><div class="result-metric-label">P99.9</div><div class="result-metric-value">${formatLatency(data.percentiles.p999)}</div></div>
             `;
         }
     } else {
