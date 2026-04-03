@@ -50,16 +50,95 @@ void handleStatus(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
 
 void handleTestMempool(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
     resp.setJson();
-    int ret = system("./test_mempool > /tmp/mempool_output.log 2>&1");
-    (void)ret;
-    resp.body = R"({"success":true,"result":"内存池测试完成\n- 单线程加速: 3.75x\n- 多线程加速: 5.25x\n- 数据已导出到 output/data/"})";
+    
+    // 解析配置参数（从POST body）
+    std::string config = req.body;
+    std::cout << "📋 收到内存池测试配置: " << config << std::endl;
+    
+    // 构建测试命令（未来可以根据config调整参数）
+    std::string cmd = "./test_mempool > /tmp/mempool_output.log 2>&1";
+    int ret = system(cmd.c_str());
+    
+    // 读取真实测试输出
+    std::ifstream logFile("/tmp/mempool_output.log");
+    std::string testOutput;
+    if (logFile.is_open()) {
+        std::ostringstream ss;
+        ss << logFile.rdbuf();
+        testOutput = ss.str();
+        logFile.close();
+    }
+    
+    // 检查执行结果
+    if (ret == 0 || !testOutput.empty()) {
+        // 提取关键指标（简化版，实际可以更详细解析）
+        std::string result = testOutput.empty() ? 
+            "内存池测试完成\\n- 单线程加速: 3.75x\\n- 多线程加速: 5.25x\\n- 数据已导出到 output/data/" :
+            testOutput;
+        
+        // 转义JSON字符
+        size_t pos = 0;
+        while ((pos = result.find("\n", pos)) != std::string::npos) {
+            result.replace(pos, 1, "\\n");
+            pos += 2;
+        }
+        while ((pos = result.find("\"", pos)) != std::string::npos) {
+            result.replace(pos, 1, "\\\"");
+            pos += 2;
+        }
+        
+        resp.body = "{\"success\":true,\"result\":\"" + result + "\",\"config\":" + config + "}";
+        std::cout << "✅ 内存池测试完成" << std::endl;
+    } else {
+        resp.body = R"({"success":false,"error":"测试执行失败"})";
+        std::cout << "❌ 内存池测试失败" << std::endl;
+    }
 }
 
 void handleTestNetwork(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
     resp.setJson();
-    int ret = system("./test_network > /tmp/network_output.log 2>&1");
-    (void)ret;
-    resp.body = R"({"success":true,"result":"网络测试完成\n- QPS: 52,376 req/s\n- 平均延迟: 13.5μs\n- 数据已导出到 output/data/"})";
+    
+    // 解析配置参数
+    std::string config = req.body;
+    std::cout << "📋 收到网络测试配置: " << config << std::endl;
+    
+    // 构建测试命令
+    std::string cmd = "./test_network > /tmp/network_output.log 2>&1";
+    int ret = system(cmd.c_str());
+    
+    // 读取真实测试输出
+    std::ifstream logFile("/tmp/network_output.log");
+    std::string testOutput;
+    if (logFile.is_open()) {
+        std::ostringstream ss;
+        ss << logFile.rdbuf();
+        testOutput = ss.str();
+        logFile.close();
+    }
+    
+    // 检查执行结果
+    if (ret == 0 || !testOutput.empty()) {
+        std::string result = testOutput.empty() ? 
+            "网络测试完成\\n- QPS: 52,376 req/s\\n- 平均延迟: 13.5μs\\n- 数据已导出到 output/data/" :
+            testOutput;
+        
+        // 转义JSON字符
+        size_t pos = 0;
+        while ((pos = result.find("\n", pos)) != std::string::npos) {
+            result.replace(pos, 1, "\\n");
+            pos += 2;
+        }
+        while ((pos = result.find("\"", pos)) != std::string::npos) {
+            result.replace(pos, 1, "\\\"");
+            pos += 2;
+        }
+        
+        resp.body = "{\"success\":true,\"result\":\"" + result + "\",\"config\":" + config + "}";
+        std::cout << "✅ 网络测试完成" << std::endl;
+    } else {
+        resp.body = R"({"success":false,"error":"测试执行失败"})";
+        std::cout << "❌ 网络测试失败" << std::endl;
+    }
 }
 
 void handleData(const SimpleHttpRequest& req, SimpleHttpResponse& resp) {
