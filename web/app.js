@@ -192,218 +192,20 @@ function updateElement(id, value) {
     }
 }
 
-// ========== 图表初始化 ==========
+// ========== 图表初始化（已简化，图表模块已移除） ==========
 function initCharts() {
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                labels: {
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim()
-                }
-            }
-        },
-        scales: {
-            y: {
-                ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() },
-                grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border').trim() }
-            },
-            x: {
-                ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() },
-                grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border').trim() }
-            }
-        }
-    };
-    
-    // 内存池性能对比图
-    const mempoolCtx = document.getElementById('mempoolChart');
-    if (mempoolCtx) {
-        state.charts.mempool = new Chart(mempoolCtx, {
-            type: 'bar',
-            data: {
-                labels: ['malloc/free', '一级池', '二级池', '三级池'],
-                datasets: [{
-                    label: '单线程 (ops/s)',
-                    data: [100000, 275000, 350000, 375000],
-                    backgroundColor: 'rgba(102, 126, 234, 0.6)',
-                    borderColor: 'rgba(102, 126, 234, 1)',
-                    borderWidth: 2
-                }, {
-                    label: '多线程 (ops/s)',
-                    data: [95000, 380000, 475000, 525000],
-                    backgroundColor: 'rgba(118, 75, 162, 0.6)',
-                    borderColor: 'rgba(118, 75, 162, 1)',
-                    borderWidth: 2
-                }]
-            },
-            options: chartOptions
-        });
-    }
-    
-    // 多线程扩展性图
-    const threadCtx = document.getElementById('threadChart');
-    if (threadCtx) {
-        state.charts.thread = new Chart(threadCtx, {
-            type: 'line',
-            data: {
-                labels: ['1', '2', '4', '6', '8', '10'],
-                datasets: [{
-                    label: '三级池',
-                    data: [375000, 720000, 1380000, 1950000, 2450000, 2850000],
-                    borderColor: 'rgba(102, 126, 234, 1)',
-                    backgroundColor: 'rgba(102, 126, 234, 0.2)',
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: 'malloc',
-                    data: [100000, 180000, 320000, 450000, 550000, 620000],
-                    borderColor: 'rgba(239, 68, 68, 1)',
-                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: chartOptions
-        });
-    }
-    
-    // 网络QPS图
-    const qpsCtx = document.getElementById('qpsChart');
-    if (qpsCtx) {
-        state.charts.qps = new Chart(qpsCtx, {
-            type: 'bar',
-            data: {
-                labels: ['1连接', '10连接', '50连接', '100连接'],
-                datasets: [{
-                    label: 'QPS',
-                    data: [8234, 28456, 45234, 52376],
-                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
-                    borderColor: 'rgba(16, 185, 129, 1)',
-                    borderWidth: 2
-                }]
-            },
-            options: chartOptions
-        });
-    }
-    
-    // 延迟分布图
-    const latencyCtx = document.getElementById('latencyChart');
-    if (latencyCtx) {
-        state.charts.latency = new Chart(latencyCtx, {
-            type: 'line',
-            data: {
-                labels: ['P50', 'P75', 'P90', 'P95', 'P99'],
-                datasets: [{
-                    label: '延迟 (μs)',
-                    data: [10.2, 12.5, 15.8, 18.3, 90.5],
-                    borderColor: 'rgba(245, 158, 11, 1)',
-                    backgroundColor: 'rgba(245, 158, 11, 0.2)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: chartOptions
-        });
-    }
-    
-    // 实时系统监控
-    const systemCtx = document.getElementById('systemChart');
-    if (systemCtx) {
-        state.charts.system = new Chart(systemCtx, {
-            type: 'line',
-            data: {
-                labels: Array(20).fill(''),
-                datasets: [{
-                    label: 'CPU %',
-                    data: Array(20).fill(0),
-                    borderColor: 'rgba(102, 126, 234, 1)',
-                    backgroundColor: 'rgba(102, 126, 234, 0.2)',
-                    tension: 0.4
-                }, {
-                    label: 'Memory %',
-                    data: Array(20).fill(0),
-                    borderColor: 'rgba(118, 75, 162, 1)',
-                    backgroundColor: 'rgba(118, 75, 162, 0.2)',
-                    tension: 0.4
-                }]
-            },
-            options: { ...chartOptions, animation: false }
-        });
-    }
-    
-    // 网络流量监控
-    const networkCtx = document.getElementById('networkChart');
-    if (networkCtx) {
-        state.charts.network = new Chart(networkCtx, {
-            type: 'line',
-            data: {
-                labels: Array(20).fill(''),
-                datasets: [{
-                    label: 'Requests/s',
-                    data: Array(20).fill(0),
-                    borderColor: 'rgba(16, 185, 129, 1)',
-                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                    tension: 0.4
-                }]
-            },
-            options: { ...chartOptions, animation: false }
-        });
-    }
-    
-    addLog('📊 图表初始化完成', 'success');
+    // 图表模块已移除，此函数保留以兼容调用
+    addLog('📊 系统初始化完成', 'success');
 }
 
-// 更新图表主题
+// 更新图表主题（图表模块已移除）
 function updateChartTheme() {
-    Object.values(state.charts).forEach(chart => {
-        if (chart && chart.options) {
-            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
-            const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
-            const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
-            
-            if (chart.options.plugins && chart.options.plugins.legend) {
-                chart.options.plugins.legend.labels.color = textColor;
-            }
-            if (chart.options.scales) {
-                if (chart.options.scales.y) {
-                    chart.options.scales.y.ticks.color = mutedColor;
-                    chart.options.scales.y.grid.color = borderColor;
-                }
-                if (chart.options.scales.x) {
-                    chart.options.scales.x.ticks.color = mutedColor;
-                    chart.options.scales.x.grid.color = borderColor;
-                }
-            }
-            chart.update();
-        }
-    });
+    // 图表模块已移除，此函数保留以兼容调用
 }
 
-// ========== 实时系统监控 ==========
+// ========== 实时系统监控（图表模块已移除） ==========
 function startSystemMonitoring() {
-    setInterval(() => {
-        // 模拟CPU和内存数据（实际应该从API获取）
-        const cpu = Math.random() * 30 + 10;
-        const memory = Math.random() * 20 + 40;
-        const requests = Math.random() * 100 + 50;
-        
-        // 更新系统图表
-        if (state.charts.system) {
-            state.charts.system.data.datasets[0].data.push(cpu);
-            state.charts.system.data.datasets[0].data.shift();
-            state.charts.system.data.datasets[1].data.push(memory);
-            state.charts.system.data.datasets[1].data.shift();
-            state.charts.system.update();
-        }
-        
-        // 更新网络图表
-        if (state.charts.network) {
-            state.charts.network.data.datasets[0].data.push(requests);
-            state.charts.network.data.datasets[0].data.shift();
-            state.charts.network.update();
-        }
-    }, 2000);
+    // 图表模块已移除，此函数保留以兼容调用
 }
 
 // ========== 测试功能 ==========
@@ -832,6 +634,15 @@ async function runProfessionalTest(type) {
 
         testState[type].running = false;
         stopBtn.disabled = true;
+        
+        // 清除进度更新interval
+        if (testState[type].progressInterval) {
+            clearInterval(testState[type].progressInterval);
+        }
+        
+        // 显示100%完成
+        document.getElementById(`${type}-progress-bar`).style.width = '100%';
+        document.getElementById(`${type}-progress-text`).textContent = '100%';
 
         if (data.success) {
             testState[type].result = data;
@@ -860,52 +671,63 @@ async function runProfessionalTest(type) {
     } catch (error) {
         testState[type].running = false;
         stopBtn.disabled = true;
+        
+        // 清除进度更新interval
+        if (testState[type].progressInterval) {
+            clearInterval(testState[type].progressInterval);
+        }
+        
         displayTestError(type, error.message);
         addLog(`❌ 测试请求失败: ${error.message}`, 'error');
         showNotification('测试请求失败', 'error');
     }
 }
 
-// 模拟测试进度
+// 显示测试进度（真实等待后端响应）
 function simulateTestProgress(type, config) {
-    const duration = type === 'mempool' ? 
-        (config.mode === 'quick' ? 30 : config.mode === 'standard' ? 60 : 120) :
-        config.duration;
+    // 预估测试时长
+    let estimatedDuration;
+    if (type === 'mempool') {
+        // 内存池测试：根据迭代次数估算
+        const iterations = config.iterations || 1000000;
+        if (config.mode === 'quick') {
+            estimatedDuration = Math.max(2, Math.min(iterations / 500000, 10));
+        } else if (config.mode === 'stress') {
+            estimatedDuration = Math.max(5, Math.min(iterations / 200000, 30));
+        } else {
+            estimatedDuration = Math.max(10, Math.min(iterations / 100000, 60));
+        }
+    } else {
+        // 网络测试：直接使用duration参数
+        estimatedDuration = config.duration || 15;
+    }
     
     let elapsed = 0;
-    const interval = setInterval(() => {
+    testState[type].progressInterval = setInterval(() => {
         if (!testState[type].running) {
-            clearInterval(interval);
+            clearInterval(testState[type].progressInterval);
             return;
         }
 
         elapsed++;
-        const progress = Math.min((elapsed / duration) * 100, 100);
+        
+        // 进度条：基于预估时间，但不超过95%（等待后端真正完成）
+        const progress = Math.min((elapsed / estimatedDuration) * 95, 95);
 
         // 更新进度条
         document.getElementById(`${type}-progress-bar`).style.width = `${progress}%`;
         document.getElementById(`${type}-progress-text`).textContent = `${Math.round(progress)}%`;
         document.getElementById(`${type}-elapsed`).textContent = elapsed;
 
-        // 更新实时统计（模拟数据）
-        const currentQPS = Math.floor(Math.random() * 10000 + 40000);
-        const avgLatency = (Math.random() * 5 + 10).toFixed(2);
-        const completion = type === 'mempool' ? 
-            `${Math.floor(config.iterations * progress / 100)}/${config.iterations}` :
-            `${Math.floor(config.requests * progress / 100)}/${config.requests}`;
-
-        document.getElementById(`${type}-current-qps`).textContent = currentQPS.toLocaleString();
-        document.getElementById(`${type}-avg-latency`).textContent = `${avgLatency}μs`;
-        
+        // 显示等待状态
         if (type === 'mempool') {
-            document.getElementById(`${type}-completion`).textContent = completion;
+            document.getElementById(`${type}-current-qps`).textContent = '测试中...';
+            document.getElementById(`${type}-avg-latency`).textContent = '等待结果';
+            document.getElementById(`${type}-completion`).textContent = `~${elapsed}s`;
         } else {
-            const successRate = (95 + Math.random() * 5).toFixed(2);
-            document.getElementById(`${type}-success-rate`).textContent = `${successRate}%`;
-        }
-
-        if (elapsed >= duration) {
-            clearInterval(interval);
+            document.getElementById(`${type}-current-qps`).textContent = '测试中...';
+            document.getElementById(`${type}-avg-latency`).textContent = '等待结果';
+            document.getElementById(`${type}-success-rate`).textContent = `${elapsed}/${estimatedDuration}s`;
         }
     }, 1000);
 }
