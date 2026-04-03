@@ -679,12 +679,13 @@ function resetTestConfig(type) {
         document.getElementById('mempool-baseline').checked = true;
         document.getElementById('mempool-warmup').checked = true;
         document.getElementById('mempool-stats').checked = true;
-        document.getElementById('mempool-export-csv').checked = true;
+        document.getElementById('mempool-export-csv').checked = false;
         document.getElementById('mempool-export-json').checked = false;
         document.getElementById('mempool-save-history').checked = true;
+        updateMempoolConfigUI();
     } else {
         document.getElementById('network-mode').value = 'stress';
-        document.getElementById('network-duration').value = '60';
+        document.getElementById('network-duration').value = '15';
         document.getElementById('network-requests').value = '100000';
         document.getElementById('network-connections').value = '100';
         document.getElementById('network-connections-value').textContent = '100';
@@ -692,13 +693,55 @@ function resetTestConfig(type) {
         document.getElementById('network-keepalive').checked = true;
         document.getElementById('network-msgsize').value = '1024';
         document.getElementById('network-pattern').value = 'constant';
-        document.getElementById('network-random-data').checked = false;
+        document.getElementById('network-random-data').checked = true;
         document.getElementById('network-latency-dist').checked = true;
         document.getElementById('network-percentiles').checked = true;
         document.getElementById('network-throughput').checked = true;
+        updateNetworkConfigUI();
     }
     addLog(`${type === 'mempool' ? '内存池' : '网络'}测试配置已重置`, 'success');
     showNotification('配置已重置为默认值', 'success');
+}
+
+// 更新内存池配置UI（根据模式和选项禁用/启用相关配置）
+function updateMempoolConfigUI() {
+    const mode = document.getElementById('mempool-mode').value;
+    const multithread = document.getElementById('mempool-multithread').checked;
+    const scalability = document.getElementById('mempool-scalability').checked;
+    
+    // 更新模式提示
+    const hints = {
+        'quick': '快速验证内存池性能',
+        'stress': '高负载压力测试',
+        'comprehensive': '全面性能分析'
+    };
+    document.getElementById('mempool-mode-hint').textContent = hints[mode] || '';
+    
+    // 线程配置：多线程关闭时禁用线程数选择
+    const threadsGroup = document.getElementById('mempool-threads-group');
+    if (threadsGroup) {
+        threadsGroup.style.opacity = multithread ? '1' : '0.5';
+        document.getElementById('mempool-threads').disabled = !multithread;
+    }
+    
+    // 可扩展性测试时，线程数变为最大线程数
+    if (scalability && multithread) {
+        document.getElementById('mempool-threads').setAttribute('title', '最大线程数');
+    } else {
+        document.getElementById('mempool-threads').setAttribute('title', '线程数量');
+    }
+}
+
+// 更新网络配置UI
+function updateNetworkConfigUI() {
+    const mode = document.getElementById('network-mode').value;
+    
+    // 更新模式提示
+    const hints = {
+        'stress': '高并发压力测试',
+        'comprehensive': '全面网络性能分析'
+    };
+    document.getElementById('network-mode-hint').textContent = hints[mode] || '';
 }
 
 // 读取测试配置
@@ -796,9 +839,18 @@ async function runProfessionalTest(type) {
             
             // 保存到历史
             saveToHistory(type, config, data);
+            
+            // 更新最近结果摘要
+            updateResultSummary(type, data);
+            
+            // 更新hero统计
+            updateHeroStats(type, data);
 
-            addLog(`✅ ${testName}测试完成 - 加速: ${data.speedup?.toFixed(2)}x`, 'success');
-            showNotification(`测试完成！加速 ${data.speedup?.toFixed(2)}x`, 'success');
+            const resultMsg = type === 'mempool' ? 
+                `加速: ${data.speedup?.toFixed(2)}x` : 
+                `QPS: ${formatNumber(data.qps)}`;
+            addLog(`✅ ${testName}测试完成 - ${resultMsg}`, 'success');
+            showNotification(`测试完成！${resultMsg}`, 'success');
             confetti();
         } else {
             displayTestError(type, data.error || '测试失败');
@@ -994,6 +1046,91 @@ function formatNumber(num) {
     if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(2) + 'K';
     return num.toLocaleString();
+}
+
+// 更新最近测试结果摘要
+function updateResultSummary(type, data) {
+    const summaryDiv = document.getElementById(`${type}-summary`);
+    const timeSpan = document.getElementById(`${type}-last-time`);
+    
+    if (!summaryDiv) return;
+    
+    // 更新时间
+    const now = new Date();
+    timeSpan.textContent = now.toLocaleTimeString();
+    timeSpan.classList.remove('badge-outline');
+    timeSpan.classList.add('badge-success');
+    
+    let html = '<div class="summary-metrics">';
+    
+    if (type === 'mempool') {
+        html += `
+            <div class="summary-metric">
+                <span class="summary-label">加速比</span>
+                <span class="summary-value highlight">${data.speedup?.toFixed(2)}x</span>
+            </div>
+            <div class="summary-metric">
+                <span class="summary-label">malloc</span>
+                <span class="summary-value">${data.malloc_ms} ms</span>
+            </div>
+            <div class="summary-metric">
+                <span class="summary-label">pool</span>
+                <span class="summary-value success">${data.pool_ms} ms</span>
+            </div>
+            <div class="summary-metric">
+                <span class="summary-label">Pool QPS</span>
+                <span class="summary-value">${formatNumber(data.pool_qps)}</span>
+            </div>
+        `;
+    } else {
+        html += `
+            <div class="summary-metric">
+                <span class="summary-label">QPS</span>
+                <span class="summary-value highlight">${formatNumber(data.qps)}</span>
+            </div>
+            <div class="summary-metric">
+                <span class="summary-label">延迟</span>
+                <span class="summary-value">${data.avg_latency} μs</span>
+            </div>
+            <div class="summary-metric">
+                <span class="summary-label">成功率</span>
+                <span class="summary-value success">${data.success_rate}%</span>
+            </div>
+            <div class="summary-metric">
+                <span class="summary-label">吞吐量</span>
+                <span class="summary-value">${data.throughput_mbps || '-'} MB/s</span>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    summaryDiv.innerHTML = html;
+}
+
+// 更新hero统计
+function updateHeroStats(type, data) {
+    // 增加测试计数
+    const testsEl = document.getElementById('hero-tests');
+    if (testsEl) {
+        const count = parseInt(testsEl.textContent) || 0;
+        testsEl.textContent = count + 1;
+    }
+    
+    if (type === 'mempool') {
+        const speedupEl = document.getElementById('hero-speedup');
+        if (speedupEl && data.speedup) {
+            speedupEl.textContent = data.speedup.toFixed(2) + 'x';
+        }
+    } else {
+        const qpsEl = document.getElementById('hero-qps');
+        const latencyEl = document.getElementById('hero-latency');
+        if (qpsEl && data.qps) {
+            qpsEl.textContent = formatNumber(data.qps);
+        }
+        if (latencyEl && data.avg_latency) {
+            latencyEl.textContent = data.avg_latency + 'μs';
+        }
+    }
 }
 
 // 显示测试错误

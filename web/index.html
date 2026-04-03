@@ -24,7 +24,7 @@
             <div class="nav-menu">
                 <a href="#overview" class="nav-link active">系统概览</a>
                 <a href="#tests" class="nav-link">性能测试</a>
-                <a href="#charts" class="nav-link">数据可视化</a>
+                <a href="#recent-results" class="nav-link">测试结果</a>
                 <a href="#logs" class="nav-link">系统日志</a>
             </div>
             <div class="nav-actions">
@@ -52,20 +52,20 @@
             <p class="hero-subtitle">基于线程局部内存池的高性能网络库 + 实时Web监控平台</p>
             <div class="hero-stats">
                 <div class="stat-item">
-                    <div class="stat-value">3.75x</div>
-                    <div class="stat-label">单线程加速</div>
+                    <div class="stat-value" id="hero-speedup">-</div>
+                    <div class="stat-label">内存池加速</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">5.25x</div>
-                    <div class="stat-label">多线程加速</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">52,376</div>
+                    <div class="stat-value" id="hero-qps">-</div>
                     <div class="stat-label">QPS</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">13.5μs</div>
+                    <div class="stat-value" id="hero-latency">-</div>
                     <div class="stat-label">平均延迟</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="hero-tests">0</div>
+                    <div class="stat-label">已完成测试</div>
                 </div>
             </div>
         </div>
@@ -137,25 +137,34 @@
                 <!-- 测试配置面板 -->
                 <div id="mempool-config" class="test-config">
                     <div class="config-grid">
-                        <!-- 基础配置 -->
+                        <!-- 测试模式 -->
                         <div class="config-section">
-                            <h4>⚙️ 基础配置</h4>
+                            <h4>🎯 测试模式</h4>
                             <div class="config-group">
-                                <label>测试模式</label>
-                                <select id="mempool-mode" class="config-input">
-                                    <option value="quick">快速测试（30秒）</option>
-                                    <option value="standard" selected>标准测试（60秒）</option>
-                                    <option value="intensive">深度测试（120秒）</option>
-                                    <option value="custom">自定义</option>
+                                <label>模式选择</label>
+                                <select id="mempool-mode" class="config-input" onchange="updateMempoolConfigUI()">
+                                    <option value="quick" selected>快速测试</option>
+                                    <option value="stress">压力测试</option>
+                                    <option value="comprehensive">综合测试</option>
                                 </select>
+                                <small class="config-hint" id="mempool-mode-hint">快速验证内存池性能</small>
                             </div>
                             <div class="config-group">
                                 <label>迭代次数</label>
-                                <input type="number" id="mempool-iterations" class="config-input" value="1000000" min="1000" max="100000000">
+                                <input type="number" id="mempool-iterations" class="config-input" value="1000000" min="10000" max="10000000000" step="100000">
+                                <small class="config-hint">建议: 100万-1亿次</small>
                             </div>
                             <div class="config-group">
-                                <label>内存块大小（字节）</label>
-                                <input type="number" id="mempool-blocksize" class="config-input" value="128" min="8" max="4096">
+                                <label>内存块大小 (字节)</label>
+                                <select id="mempool-blocksize" class="config-input">
+                                    <option value="32">32 (小对象)</option>
+                                    <option value="64">64</option>
+                                    <option value="128" selected>128 (推荐)</option>
+                                    <option value="256">256</option>
+                                    <option value="512">512</option>
+                                    <option value="1024">1024 (大对象)</option>
+                                    <option value="4096">4096</option>
+                                </select>
                             </div>
                         </div>
 
@@ -163,66 +172,66 @@
                         <div class="config-section">
                             <h4>🧵 并发配置</h4>
                             <div class="config-group">
-                                <label>线程数量</label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="mempool-multithread" checked onchange="updateMempoolConfigUI()">
+                                    启用多线程
+                                </label>
+                            </div>
+                            <div class="config-group" id="mempool-threads-group">
+                                <label>线程数量: <span id="mempool-threads-value">4</span></label>
                                 <input type="range" id="mempool-threads" class="config-slider" min="1" max="16" value="4" oninput="document.getElementById('mempool-threads-value').textContent=this.value">
-                                <span class="slider-value" id="mempool-threads-value">4</span>
                             </div>
                             <div class="config-group">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" id="mempool-multithread" checked>
-                                    启用多线程测试
+                                    <input type="checkbox" id="mempool-scalability" onchange="updateMempoolConfigUI()">
+                                    可扩展性测试
                                 </label>
-                            </div>
-                            <div class="config-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="mempool-scalability">
-                                    扩展性测试（1-16线程）
-                                </label>
+                                <small class="config-hint">测试1到N线程的性能曲线</small>
                             </div>
                         </div>
 
-                        <!-- 测试策略 -->
+                        <!-- 测试选项 -->
                         <div class="config-section">
-                            <h4>📊 测试策略</h4>
+                            <h4>⚙️ 测试选项</h4>
                             <div class="config-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="mempool-baseline" checked>
-                                    基准对比（malloc/free）
+                                    基准对比 (malloc/free)
                                 </label>
                             </div>
                             <div class="config-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="mempool-warmup" checked>
-                                    预热运行（避免冷启动）
+                                    预热运行
                                 </label>
                             </div>
                             <div class="config-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="mempool-stats" checked>
-                                    详细统计（P50/P95/P99）
+                                    百分位统计 (P50/P90/P99)
                                 </label>
                             </div>
                         </div>
 
-                        <!-- 输出配置 -->
+                        <!-- 输出选项 -->
                         <div class="config-section">
-                            <h4>📁 输出配置</h4>
+                            <h4>📁 输出选项</h4>
                             <div class="config-group">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" id="mempool-export-csv" checked>
-                                    导出CSV数据
+                                    <input type="checkbox" id="mempool-export-csv">
+                                    导出CSV
                                 </label>
                             </div>
                             <div class="config-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="mempool-export-json">
-                                    导出JSON报告
+                                    导出JSON
                                 </label>
                             </div>
                             <div class="config-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="mempool-save-history" checked>
-                                    保存到历史记录
+                                    保存历史
                                 </label>
                             </div>
                         </div>
@@ -295,35 +304,34 @@
                 <!-- 测试配置面板 -->
                 <div id="network-config" class="test-config">
                     <div class="config-grid">
-                        <!-- 基础配置 -->
+                        <!-- 测试模式 -->
                         <div class="config-section">
-                            <h4>⚙️ 基础配置</h4>
+                            <h4>🎯 测试模式</h4>
                             <div class="config-group">
-                                <label>测试模式</label>
-                                <select id="network-mode" class="config-input">
-                                    <option value="qps">QPS吞吐量测试</option>
-                                    <option value="latency">延迟测试</option>
-                                    <option value="concurrent">并发连接测试</option>
-                                    <option value="stress" selected>综合压力测试</option>
+                                <label>模式选择</label>
+                                <select id="network-mode" class="config-input" onchange="updateNetworkConfigUI()">
+                                    <option value="stress" selected>压力测试</option>
+                                    <option value="comprehensive">综合测试</option>
                                 </select>
+                                <small class="config-hint" id="network-mode-hint">高并发压力测试</small>
                             </div>
                             <div class="config-group">
-                                <label>测试时长（秒）</label>
-                                <input type="number" id="network-duration" class="config-input" value="60" min="10" max="600">
+                                <label>测试时长 (秒)</label>
+                                <input type="number" id="network-duration" class="config-input" value="15" min="5" max="300">
+                                <small class="config-hint">默认15秒</small>
                             </div>
                             <div class="config-group">
                                 <label>请求总数</label>
-                                <input type="number" id="network-requests" class="config-input" value="100000" min="100" max="10000000">
+                                <input type="number" id="network-requests" class="config-input" value="100000" min="1000" max="10000000" step="10000">
                             </div>
                         </div>
 
-                        <!-- 并发配置 -->
+                        <!-- 连接配置 -->
                         <div class="config-section">
-                            <h4>🔗 并发配置</h4>
+                            <h4>🔗 连接配置</h4>
                             <div class="config-group">
-                                <label>并发连接数</label>
+                                <label>并发连接数: <span id="network-connections-value">100</span></label>
                                 <input type="range" id="network-connections" class="config-slider" min="1" max="1000" value="100" oninput="document.getElementById('network-connections-value').textContent=this.value">
-                                <span class="slider-value" id="network-connections-value">100</span>
                             </div>
                             <div class="config-group">
                                 <label>每连接请求数</label>
@@ -332,8 +340,9 @@
                             <div class="config-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="network-keepalive" checked>
-                                    长连接模式
+                                    Keep-Alive (长连接)
                                 </label>
+                                <small class="config-hint">复用TCP连接提升性能</small>
                             </div>
                         </div>
 
@@ -341,44 +350,51 @@
                         <div class="config-section">
                             <h4>📦 负载配置</h4>
                             <div class="config-group">
-                                <label>消息大小（字节）</label>
-                                <input type="number" id="network-msgsize" class="config-input" value="1024" min="1" max="65536">
+                                <label>消息大小 (字节)</label>
+                                <select id="network-msgsize" class="config-input">
+                                    <option value="64">64 (小包)</option>
+                                    <option value="256">256</option>
+                                    <option value="512">512</option>
+                                    <option value="1024" selected>1024 (推荐)</option>
+                                    <option value="4096">4096</option>
+                                    <option value="8192">8192 (大包)</option>
+                                </select>
                             </div>
                             <div class="config-group">
                                 <label>请求模式</label>
                                 <select id="network-pattern" class="config-input">
-                                    <option value="constant">恒定速率</option>
+                                    <option value="constant" selected>恒定速率</option>
                                     <option value="burst">突发模式</option>
                                     <option value="ramp">渐进增长</option>
                                 </select>
                             </div>
                             <div class="config-group">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" id="network-random-data">
+                                    <input type="checkbox" id="network-random-data" checked>
                                     随机数据负载
                                 </label>
                             </div>
                         </div>
 
-                        <!-- 统计配置 -->
+                        <!-- 统计选项 -->
                         <div class="config-section">
-                            <h4>📊 统计配置</h4>
+                            <h4>📊 统计选项</h4>
                             <div class="config-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="network-latency-dist" checked>
-                                    延迟分布统计
+                                    延迟分布
                                 </label>
                             </div>
                             <div class="config-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="network-percentiles" checked>
-                                    百分位数（P50/P95/P99）
+                                    百分位 (P50/P99/P99.9)
                                 </label>
                             </div>
                             <div class="config-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="network-throughput" checked>
-                                    吞吐量统计
+                                    吞吐量 (MB/s)
                                 </label>
                             </div>
                         </div>
@@ -451,101 +467,35 @@
             </div>
         </section>
 
-        <!-- 性能指标 -->
-        <section class="section">
-            <h2 class="section-title">📈 性能指标</h2>
-            <div class="card">
-                <div class="metrics-grid">
-                    <div class="metric-item">
-                        <div class="metric-header">
-                            <span class="metric-icon">🚀</span>
-                            <span class="metric-name">单线程加速比</span>
-                        </div>
-                        <div class="metric-value">3.75x</div>
-                        <div class="metric-desc">相比malloc/free</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 75%;"></div>
-                        </div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-header">
-                            <span class="metric-icon">⚡</span>
-                            <span class="metric-name">多线程加速比</span>
-                        </div>
-                        <div class="metric-value">5.25x</div>
-                        <div class="metric-desc">10线程场景</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 90%;"></div>
-                        </div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-header">
-                            <span class="metric-icon">📊</span>
-                            <span class="metric-name">P99延迟降低</span>
-                        </div>
-                        <div class="metric-value">6.67x</div>
-                        <div class="metric-desc">尾延迟优化</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 95%;"></div>
-                        </div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-header">
-                            <span class="metric-icon">🌐</span>
-                            <span class="metric-name">网络QPS</span>
-                        </div>
-                        <div class="metric-value">52,376</div>
-                        <div class="metric-desc">请求/秒</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 85%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 数据可视化 -->
-        <section class="section" id="charts">
-            <h2 class="section-title">📊 数据可视化</h2>
+        <!-- 最近测试结果 -->
+        <section class="section" id="recent-results">
+            <h2 class="section-title">� 最近测试结果</h2>
             <div class="grid grid-2">
-                <!-- 内存池性能对比图 -->
-                <div class="card">
-                    <h3 style="margin-bottom: 1rem;">内存池性能对比</h3>
-                    <canvas id="mempoolChart"></canvas>
-                </div>
-                
-                <!-- 多线程扩展性图 -->
-                <div class="card">
-                    <h3 style="margin-bottom: 1rem;">多线程扩展性</h3>
-                    <canvas id="threadChart"></canvas>
-                </div>
-                
-                <!-- 网络QPS图 -->
-                <div class="card">
-                    <h3 style="margin-bottom: 1rem;">网络QPS性能</h3>
-                    <canvas id="qpsChart"></canvas>
-                </div>
-                
-                <!-- 延迟分布图 -->
-                <div class="card">
-                    <h3 style="margin-bottom: 1rem;">延迟分布</h3>
-                    <canvas id="latencyChart"></canvas>
-                </div>
-            </div>
-        </section>
-
-        <!-- 实时性能监控 -->
-        <section class="section">
-            <h2 class="section-title">⚡ 实时性能监控</h2>
-            <div class="card">
-                <div class="grid grid-2" style="gap: 2rem;">
-                    <div>
-                        <h3 style="margin-bottom: 1rem;">CPU & 内存使用</h3>
-                        <canvas id="systemChart"></canvas>
+                <!-- 内存池最近结果 -->
+                <div class="card result-summary-card">
+                    <div class="result-summary-header">
+                        <h3>💾 内存池测试</h3>
+                        <span class="badge badge-outline" id="mempool-last-time">未测试</span>
                     </div>
-                    <div>
-                        <h3 style="margin-bottom: 1rem;">网络流量</h3>
-                        <canvas id="networkChart"></canvas>
+                    <div class="result-summary-body" id="mempool-summary">
+                        <div class="summary-placeholder">
+                            <span class="placeholder-icon">�</span>
+                            <p>运行内存池测试以查看结果</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 网络最近结果 -->
+                <div class="card result-summary-card">
+                    <div class="result-summary-header">
+                        <h3>🌐 网络测试</h3>
+                        <span class="badge badge-outline" id="network-last-time">未测试</span>
+                    </div>
+                    <div class="result-summary-body" id="network-summary">
+                        <div class="summary-placeholder">
+                            <span class="placeholder-icon">📋</span>
+                            <p>运行网络测试以查看结果</p>
+                        </div>
                     </div>
                 </div>
             </div>
